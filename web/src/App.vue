@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { computed } from 'vue'
 
-const activeScreen = ref<'home1' | 'home2' | 'ai1'>('home1')
+const activeScreen = ref<'home1' | 'home2' | 'ai1' | 'ai5' | 'itinerary'>('home1')
 
 interface CardData {
   title: string
@@ -128,6 +129,32 @@ function goToHome2() {
 function goToAi1() {
   activeScreen.value = 'ai1'
 }
+
+function goToAi5() {
+  activeScreen.value = 'ai5'
+}
+
+// AI5 偏好页状态
+const ai5TimeType = ref('')
+const ai5Activities = ref<string[]>([])
+const ai5Range = ref('')
+const ai5Budget = ref('')
+const ai5Stay = ref('')
+const ai5TimelineValue = ref(3) // 时间轴默认值，范围 1-6 小时
+
+// 选周末两天时，活动偏好及以下区块整体下移 75px
+// 短时闲逛时，活动偏好区块下移以容纳时间轴选择器
+const ai5Offset = computed(() => {
+  if (ai5TimeType.value === '周末两天') return 75
+  if (ai5TimeType.value === '短时闲逛') return 100
+  return 0
+})
+
+function toggleAi5Activity(tag: string) {
+  const idx = ai5Activities.value.indexOf(tag)
+  if (idx === -1) ai5Activities.value.push(tag)
+  else ai5Activities.value.splice(idx, 1)
+}
 </script>
 
 <template>
@@ -239,7 +266,7 @@ function goToAi1() {
             </footer>
           </main>
 
-          <main v-else class="screen ai1-screen" data-node-id="210:628" @mousemove="handleMouseMove" @mouseup="handleMouseUp" @mouseleave="handleMouseUp">
+          <main v-else-if="activeScreen === 'ai1'" class="screen ai1-screen" data-node-id="210:628" @mousemove="handleMouseMove" @mouseup="handleMouseUp" @mouseleave="handleMouseUp">
             <!-- 背景光斑：纯 CSS 渐变，避免位图边缘伪影 -->
             <div class="ai1-bg" aria-hidden="true"></div>
 
@@ -312,7 +339,10 @@ function goToAi1() {
             </label>
 
             <!-- 补充想法 (left:122 top:606 w:149 h:32) -->
-            <div class="ai1-supplement" data-node-id="210:679">
+            <div class="ai1-supplement" data-node-id="210:679"
+                 role="button" tabindex="0"
+                 @click="goToAi5"
+                 @keyup.enter="goToAi5">
               <span class="ai1-supplement-text">补充我的想法</span>
               <img :src="ai1VectorAsset" alt="" class="ai1-supplement-arrow" />
             </div>
@@ -338,6 +368,281 @@ function goToAi1() {
 
             <!-- Home Indicator -->
             <footer class="home-indicator-wrap" data-node-id="210:651">
+              <div class="home-indicator"></div>
+            </footer>
+          </main>
+
+          <!-- AI偏好设置页 (node 224:1026) -->
+          <main v-else-if="activeScreen === 'ai5'" class="screen ai5-screen" data-node-id="224:1026">
+            <div class="screen-bg" aria-hidden="true">
+              <div class="bg-blob bg-blob-rose"></div>
+              <div class="bg-blob bg-blob-gold"></div>
+              <div class="bg-blob bg-blob-ivory"></div>
+              <div class="bg-blob bg-blob-mist"></div>
+            </div>
+
+            <!-- 状态栏 -->
+            <header class="ai1-status-bar">
+              <div class="ai1-status-time">9:41</div>
+              <div class="ai1-status-island"></div>
+              <img :src="levelsAsset" alt="" class="ai1-status-levels" />
+            </header>
+
+            <!-- 返回按鈕 -->
+            <button type="button" class="ai5-back-btn" @click="activeScreen = 'ai1'" aria-label="返回">
+              <span class="ai5-back-chevron"></span>
+            </button>
+
+            <!-- 页面标题 -->
+            <h1 class="ai5-page-title">告诉我你的偏好</h1>
+
+            <!-- 跳过 -->
+            <button type="button" class="ai5-skip-btn" @click="activeScreen = 'itinerary'">跳过</button>
+
+            <!-- 游玩时间类型 -->
+            <p class="ai5-label" style="top:159px">游玩时间类型</p>
+            <div class="ai5-row" style="top:196px">
+              <button class="ai5-pill" :class="{active: ai5TimeType==='短时闲逛'}" @click="ai5TimeType='短时闲逛'">短时闲逛</button>
+              <button class="ai5-pill" :class="{active: ai5TimeType==='城市一日'}" @click="ai5TimeType='城市一日'">城市一日</button>
+              <button class="ai5-pill" :class="{active: ai5TimeType==='周末两天'}" @click="ai5TimeType='周末两天'">周末两天</button>
+            </div>
+
+            <!-- 预计可用时间（仅短时闲逛显示） -->
+            <template v-if="ai5TimeType === '短时闲逛'">
+              <div class="ai5-timeline-container">
+                <p class="ai5-timeline-label">预计可用时间</p>
+                <div class="ai5-timeline-track">
+                  <span class="ai5-timeline-min">1小时</span>
+                  <input
+                    v-model.number="ai5TimelineValue"
+                    type="range"
+                    min="1"
+                    max="6"
+                    class="ai5-timeline-slider"
+                  />
+                  <span class="ai5-timeline-max">6小时</span>
+                </div>
+                <p class="ai5-timeline-current">{{ ai5TimelineValue }}小时</p>
+              </div>
+            </template>
+
+            <!-- 是否在沪留宿（仅周末两天显示） -->
+            <template v-if="ai5TimeType === '周末两天'">
+              <p class="ai5-label" style="top:275px">是否在沪留宿</p>
+              <div class="ai5-row" style="top:310px">
+                <button class="ai5-pill ai5-pill--stay" :class="{active: ai5Stay==='是'}" @click="ai5Stay='是'">是</button>
+                <button class="ai5-pill ai5-pill--stay" :class="{active: ai5Stay==='否'}" @click="ai5Stay='否'">否</button>
+              </div>
+            </template>
+
+            <!-- 活动偏好 (多选) -->
+            <p class="ai5-label" :style="{top: (275 + ai5Offset) + 'px'}">活动偏好 (多选)</p>
+            <div class="ai5-row" :style="{top: (316 + ai5Offset) + 'px'}">
+              <button class="ai5-chip" :class="{active: ai5Activities.includes('寻味美食')}" @click="toggleAi5Activity('寻味美食')">寻味美食</button>
+              <button class="ai5-chip" :class="{active: ai5Activities.includes('喝咖啡')}" @click="toggleAi5Activity('喝咖啡')">喝咖啡</button>
+              <button class="ai5-chip" :class="{active: ai5Activities.includes('逛街区')}" @click="toggleAi5Activity('逛街区')">逛街区</button>
+              <button class="ai5-chip" :class="{active: ai5Activities.includes('手作体验')}" @click="toggleAi5Activity('手作体验')">手作体验</button>
+            </div>
+            <div class="ai5-row" :style="{top: (370 + ai5Offset) + 'px'}">
+              <button class="ai5-chip" :class="{active: ai5Activities.includes('城市散步')}" @click="toggleAi5Activity('城市散步')">城市散步</button>
+              <button class="ai5-chip" :class="{active: ai5Activities.includes('拍照打卡')}" @click="toggleAi5Activity('拍照打卡')">拍照打卡</button>
+              <button class="ai5-chip" :class="{active: ai5Activities.includes('书店阅读')}" @click="toggleAi5Activity('书店阅读')">书店阅读</button>
+              <button class="ai5-chip" :class="{active: ai5Activities.includes('看展览')}" @click="toggleAi5Activity('看展览')">看展览</button>
+            </div>
+
+            <!-- 出行范围 -->
+            <p class="ai5-label" :style="{top: (444 + ai5Offset) + 'px'}">出行范围</p>
+            <div class="ai5-row" :style="{top: (479 + ai5Offset) + 'px'}">
+              <button class="ai5-pill" :class="{active: ai5Range==='就近玩玩'}" @click="ai5Range='就近玩玩'">就近玩玩</button>
+              <button class="ai5-pill" :class="{active: ai5Range==='地铁30分钟'}" @click="ai5Range='地铁30分钟'">地铁30分钟</button>
+              <button class="ai5-pill" :class="{active: ai5Range==='可以跨区'}" @click="ai5Range='可以跨区'">可以跨区</button>
+            </div>
+
+            <!-- 人均预算 -->
+            <p class="ai5-label" :style="{top: (552 + ai5Offset) + 'px'}">人均预算</p>
+            <div class="ai5-row" :style="{top: (586 + ai5Offset) + 'px'}">
+              <button class="ai5-budget" :class="{active: ai5Budget==='100元内'}" @click="ai5Budget='100元内'">100元内</button>
+              <button class="ai5-budget" :class="{active: ai5Budget==='100-200元'}" @click="ai5Budget='100-200元'">100-200元</button>
+              <button class="ai5-budget" :class="{active: ai5Budget==='200-300元'}" @click="ai5Budget='200-300元'">200-300元</button>
+              <button class="ai5-budget" :class="{active: ai5Budget==='不限'}" @click="ai5Budget='不限'">不限</button>
+            </div>
+
+            <!-- 生成按鈕 -->
+            <button type="button" class="ai5-cta-btn" @click="activeScreen = 'itinerary'">
+              生成我的闲时计划<span class="ai5-cta-lightning">⚡</span>
+            </button>
+
+            <!-- Home Indicator -->
+            <footer class="home-indicator-wrap">
+              <div class="home-indicator"></div>
+            </footer>
+          </main>
+
+          <!-- 行程页 (node 156:994) -->
+          <main v-else-if="activeScreen === 'itinerary'" class="screen itinerary-screen" data-node-id="156:994">
+            <!-- 背景装饰 -->
+            <div class="itinerary-bg-decoration"></div>
+
+            <!-- 状态栏 -->
+            <header class="ai1-status-bar">
+              <div class="ai1-status-time">9:41</div>
+              <div class="ai1-status-island"></div>
+              <img :src="levelsAsset" alt="" class="ai1-status-levels" />
+            </header>
+
+            <!-- 地址导航栏 -->
+            <div class="itinerary-address-bar">
+              <div class="itinerary-address-info">
+                <div class="itinerary-address-item">
+                  <span class="itinerary-icon">📍</span>
+                  <span class="itinerary-address-text">上海市徐汇区武康路 376 号附近</span>
+                </div>
+                <div class="itinerary-address-divider"></div>
+                <div class="itinerary-address-item">
+                  <span class="itinerary-icon">📍</span>
+                  <span class="itinerary-address-text">上海市徐汇区上海图书馆地铁站</span>
+                </div>
+              </div>
+              <div class="itinerary-action-buttons">
+                <button class="itinerary-icon-btn" aria-label="更多选项">⋮</button>
+                <button class="itinerary-icon-btn" aria-label="交换">🔄</button>
+              </div>
+            </div>
+
+            <!-- 地图信息卡 -->
+            <div class="itinerary-map-card">
+              <p class="itinerary-map-title">步行时间</p>
+              <div class="itinerary-stats">
+                <div class="itinerary-stat">
+                  <span class="itinerary-stat-label">总路程</span>
+                  <span class="itinerary-stat-value">约1.8km</span>
+                </div>
+                <div class="itinerary-stat">
+                  <span class="itinerary-stat-label">交通方式</span>
+                  <span class="itinerary-stat-value">全程步行</span>
+                </div>
+                <div class="itinerary-stat">
+                  <span class="itinerary-stat-label">预算估测</span>
+                  <span class="itinerary-stat-value">¥230–350/人</span>
+                </div>
+                <div class="itinerary-stat">
+                  <span class="itinerary-stat-label">预计时间</span>
+                  <span class="itinerary-stat-value">约25分钟</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 行程卡片 -->
+            <div class="itinerary-cards-container">
+              <!-- 第1个卡片 -->
+              <div class="itinerary-card">
+                <div class="itinerary-card-time">14:08 - 14:55（50分钟）</div>
+                <div class="itinerary-card-number">1</div>
+                <h3 class="itinerary-card-name">FILM电影时光书店</h3>
+                <div class="itinerary-card-tags">
+                  <span class="itinerary-tag">电影主题</span>
+                  <span class="itinerary-tag">安静翻阅</span>
+                  <span class="itinerary-tag">胶片气质</span>
+                </div>
+                <p class="itinerary-card-price">人均 ¥43</p>
+                <div class="itinerary-card-actions">
+                  <button class="itinerary-btn-detail">查看详情</button>
+                  <button class="itinerary-btn-swap">换一个</button>
+                </div>
+              </div>
+
+              <!-- 中间步行时间 -->
+              <div class="itinerary-walking">
+                <span>⬇️</span>
+                <span class="itinerary-walking-text">步行约 5 分钟</span>
+              </div>
+
+              <!-- 第2个卡片 -->
+              <div class="itinerary-card">
+                <div class="itinerary-card-time">15:00 - 16:00（60分钟）</div>
+                <div class="itinerary-card-number">2</div>
+                <h3 class="itinerary-card-name">RAC BAR（安福路店）</h3>
+                <div class="itinerary-card-tags">
+                  <span class="itinerary-tag">街角咖啡</span>
+                  <span class="itinerary-tag">露台小坐</span>
+                  <span class="itinerary-tag">法式风情</span>
+                </div>
+                <p class="itinerary-card-price">人均 ¥120-150</p>
+                <div class="itinerary-card-actions">
+                  <button class="itinerary-btn-detail">查看详情</button>
+                  <button class="itinerary-btn-swap">换一个</button>
+                </div>
+              </div>
+
+              <!-- 中间步行时间 -->
+              <div class="itinerary-walking">
+                <span>⬇️</span>
+                <span class="itinerary-walking-text">步行约 8–10 分钟</span>
+              </div>
+
+              <!-- 第3个卡片 -->
+              <div class="itinerary-card">
+                <div class="itinerary-card-time">16:10 - 16:50（40分钟）</div>
+                <div class="itinerary-card-number">3</div>
+                <h3 class="itinerary-card-name">一面春风 （吴兴路总店/武康周边）</h3>
+                <div class="itinerary-card-tags">
+                  <span class="itinerary-tag">烟火小馆</span>
+                  <span class="itinerary-tag">本帮风味</span>
+                  <span class="itinerary-tag">匠心汤底</span>
+                </div>
+                <p class="itinerary-card-price">人均 ¥55-70</p>
+                <div class="itinerary-card-actions">
+                  <button class="itinerary-btn-detail">查看详情</button>
+                  <button class="itinerary-btn-swap">换一个</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 出发前提醒 -->
+            <div class="itinerary-reminders">
+              <h3 class="itinerary-section-title">出发前提醒</h3>
+              <div class="itinerary-reminder-box">
+                <div class="itinerary-reminder-item">
+                  <strong>今日提醒</strong>
+                  <ul class="itinerary-reminder-list">
+                    <li>暴晒 25℃</li>
+                    <li>RAC BAR 可能等位</li>
+                    <li>已预留缓冲</li>
+                  </ul>
+                </div>
+                <div class="itinerary-reminder-item">
+                  <strong>建议携带</strong>
+                  <ul class="itinerary-reminder-checklist">
+                    <li><input type="checkbox"> 遮阳伞</li>
+                    <li><input type="checkbox"> 一台傻瓜胶片相机</li>
+                    <li><input type="checkbox"> 充电宝</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- 调整选项 -->
+            <div class="itinerary-adjustments">
+              <h3 class="itinerary-section-title">想调整一下？</h3>
+              <div class="itinerary-adjustment-buttons">
+                <button class="itinerary-adjustment-btn">更轻松一点</button>
+                <button class="itinerary-adjustment-btn">避开排队</button>
+                <button class="itinerary-adjustment-btn itinerary-adjustment-btn-primary">减少步行</button>
+                <button class="itinerary-adjustment-btn itinerary-adjustment-btn-primary">重新生成</button>
+              </div>
+            </div>
+
+            <!-- 底部导航 -->
+            <div class="itinerary-bottom-nav">
+              <button class="itinerary-nav-btn" aria-label="我的">👤</button>
+              <button class="itinerary-nav-btn" aria-label="搜索">🔍</button>
+              <button class="itinerary-nav-btn itinerary-nav-primary" aria-label="开始导航">🧭</button>
+              <button class="itinerary-nav-btn" aria-label="消息">💬</button>
+              <button class="itinerary-nav-btn" aria-label="返回AI1" @click="activeScreen = 'ai1'">×</button>
+            </div>
+
+            <!-- Home Indicator -->
+            <footer class="home-indicator-wrap">
               <div class="home-indicator"></div>
             </footer>
           </main>

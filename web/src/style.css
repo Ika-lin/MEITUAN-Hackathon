@@ -12,6 +12,462 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* ========== ITINERARY SCREEN (node 156:994) ========== */
+
+.itinerary-screen {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: linear-gradient(135deg, #f5f5f7 0%, #ffffff 100%);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.itinerary-bg-decoration {
+  position: absolute;
+  width: 100%;
+  height: 300px;
+  top: 0;
+  left: 0;
+  background: linear-gradient(135deg, rgba(42, 42, 42, 0.03) 0%, rgba(74, 125, 184, 0.05) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 地址栏 */
+.itinerary-address-bar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 60px 16px 16px;
+  background: white;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.itinerary-address-info {
+  flex: 1;
+  background: white;
+  border: 1px solid #f3f3f3;
+  border-radius: 24px;
+  padding: 16px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+}
+
+.itinerary-address-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 14px;
+  color: #2c2828;
+  line-height: 1.6;
+}
+
+.itinerary-address-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.itinerary-address-divider {
+  height: 1px;
+  background: #e8e8e8;
+  margin: 12px 0;
+}
+
+.itinerary-address-item:first-child {
+  font-weight: 500;
+}
+
+.itinerary-icon {
+  display: inline-block;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.itinerary-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.itinerary-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 1000px;
+  background: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.itinerary-icon-btn:hover {
+  background: #f5f5f5;
+  transform: scale(1.05);
+}
+
+/* 地图卡片 */
+.itinerary-map-card {
+  position: relative;
+  z-index: 10;
+  margin: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.itinerary-map-title {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2a2a2a;
+}
+
+.itinerary-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.itinerary-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border-left: 3px solid #4a7db8;
+}
+
+.itinerary-stat-label {
+  font-size: 12px;
+  color: #919191;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.itinerary-stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2a2a2a;
+}
+
+/* 行程卡片列表 */
+.itinerary-cards-container {
+  position: relative;
+  z-index: 10;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.itinerary-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+  padding-left: 48px;
+}
+
+.itinerary-card-number {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #461c3a;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.itinerary-card-time {
+  font-size: 12px;
+  color: #919191;
+  margin-bottom: 8px;
+}
+
+.itinerary-card-name {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #2a2a2a;
+  line-height: 1.4;
+}
+
+.itinerary-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.itinerary-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #f0f0f0;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #666;
+  border: 1px solid #e8e8e8;
+}
+
+.itinerary-card-price {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a7db8;
+}
+
+.itinerary-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.itinerary-btn-detail {
+  flex: 1;
+  padding: 8px 12px;
+  background: #f9f9f9;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #2a2a2a;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.itinerary-btn-detail:hover {
+  background: #f0f0f0;
+  border-color: #d8d8d8;
+}
+
+.itinerary-btn-swap {
+  flex: 1;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #2a2a2a;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.itinerary-btn-swap:hover {
+  background: #f9f9f9;
+  border-color: #b4b4b4;
+}
+
+/* 步行时间 */
+.itinerary-walking {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  font-size: 12px;
+  color: #919191;
+}
+
+.itinerary-walking-text {
+  padding: 6px 12px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  border: 1px solid #e8e8e8;
+}
+
+/* 出发前提醒 */
+.itinerary-reminders {
+  position: relative;
+  z-index: 10;
+  padding: 16px;
+}
+
+.itinerary-section-title {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #2a2a2a;
+}
+
+.itinerary-reminder-box {
+  background: white;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.itinerary-reminder-item {
+  margin-bottom: 16px;
+}
+
+.itinerary-reminder-item:last-child {
+  margin-bottom: 0;
+}
+
+.itinerary-reminder-item strong {
+  display: block;
+  font-size: 13px;
+  color: #2a2a2a;
+  margin-bottom: 8px;
+}
+
+.itinerary-reminder-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.itinerary-reminder-list li {
+  padding: 4px 12px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #919191;
+  border: 1px solid #e8e8e8;
+}
+
+.itinerary-reminder-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.itinerary-reminder-checklist li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #666;
+}
+
+.itinerary-reminder-checklist input[type="checkbox"] {
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+  accent-color: #461c3a;
+}
+
+/* 调整选项 */
+.itinerary-adjustments {
+  position: relative;
+  z-index: 10;
+  padding: 16px;
+  padding-bottom: 80px;
+}
+
+.itinerary-adjustment-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.itinerary-adjustment-btn {
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #404040;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.itinerary-adjustment-btn:hover {
+  background: #f5f5f5;
+  border-color: #b4b4b4;
+}
+
+.itinerary-adjustment-btn-primary {
+  background: #2a2a2a;
+  color: white;
+  border-color: #2a2a2a;
+}
+
+.itinerary-adjustment-btn-primary:hover {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+}
+
+/* 底部导航 */
+.itinerary-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: var(--screen-w);
+  height: 54px;
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  backdrop-filter: blur(10px);
+  z-index: 100;
+}
+
+.itinerary-nav-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 8px;
+  color: #919191;
+}
+
+.itinerary-nav-btn:hover {
+  background: #f5f5f5;
+  color: #2a2a2a;
+}
+
+.itinerary-nav-primary {
+  background: rgba(74, 125, 184, 0.1);
+  color: #4a7db8;
+  font-weight: bold;
+  padding: 8px;
+  width: 48px;
+  height: 48px;
+}
+
+.itinerary-nav-primary:hover {
+  background: rgba(74, 125, 184, 0.2);
+}
+
 *,
 *::before,
 *::after {
@@ -804,6 +1260,7 @@ body {
   background: rgba(255, 255, 255, 0.58);
   border-radius: 50px;
   z-index: 4;
+  cursor: pointer;
 }
 
 .ai1-supplement-text {
@@ -896,4 +1353,259 @@ body {
   .preview-page {
     padding: 16px 8px 24px;
   }
+}
+
+/* ─── AI偏好设置页 (node 224:1026) ──────────────────────── */
+
+.ai5-screen {
+  position: relative;
+  background: #f9f9f9;
+  overflow: hidden;
+}
+
+/* 所有直接子元素统一绝对定位 */
+.ai5-screen > *:not(.screen-bg) {
+  position: absolute;
+  z-index: 4;
+}
+
+/* 返回按鈕 left:11 top:62 size:40 */
+.ai5-back-btn {
+  left: 11px;
+  top: 62px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #f3f3f3;
+  border-radius: 1000px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 6;
+}
+
+/* CSS 左向尖弧 */
+.ai5-back-chevron {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-left: 1.8px solid #1b1c1c;
+  border-top: 1.8px solid #1b1c1c;
+  transform: rotate(-45deg) translate(1px, 1px);
+}
+
+/* 跳过按鈕 left:309 top:61 w:63 h:40 */
+.ai5-skip-btn {
+  left: 309px;
+  top: 61px;
+  width: 63px;
+  height: 40px;
+  border: 0;
+  border-radius: 9999px;
+  background: #fff;
+  font-size: 13px;
+  color: #000;
+  cursor: pointer;
+  z-index: 6;
+}
+
+/* 页面标题 居中 top:96px（中心） */
+.ai5-page-title {
+  left: 0;
+  right: 0;
+  top: 85px;
+  margin: 0;
+  text-align: center;
+  font-size: 19.643px;
+  font-weight: 400;
+  color: #1b1c1c;
+  line-height: 22px;
+}
+
+/* 分区标签 left:17px */
+.ai5-label {
+  left: 17px;
+  margin: 0;
+  font-size: 15px;
+  color: #5c5c5c;
+  line-height: 22px;
+}
+
+/* 通用胶囊行：left:17 right:17 flex布局 */
+.ai5-row {
+  left: 17px;
+  right: 17px;
+  display: flex;
+  gap: 8px;
+}
+
+/* 游玩时间 / 出行范围 h:48 rounded:41px */
+.ai5-pill {
+  flex: 1;
+  height: 48px;
+  border: 1px solid #b4b4b4;
+  border-radius: 41px;
+  background: #fff;
+  font-size: 11px;
+  color: #000;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ai5-pill.active {
+  background: #2a2a2a;
+  color: #fff;
+  border-color: #2a2a2a;
+}
+
+/* 是否在沪留宿 — 两个等宽短胶囊 */
+.ai5-pill--stay {
+  flex: 0 0 calc(50% - 4px);
+  max-width: calc(50% - 4px);
+}
+
+/* 活动偏好 chip h:42 rounded:100px */
+.ai5-chip {
+  flex: 1;
+  height: 42px;
+  border: 1.03px solid #b4b4b4;
+  border-radius: 100px;
+  background: #fff;
+  font-size: 11px;
+  color: #000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ai5-chip.active {
+  background: #2a2a2a;
+  color: #fff;
+  border-color: #2a2a2a;
+}
+
+/* 人均预算 chip h:42 rounded:27px */
+.ai5-budget {
+  flex: 1;
+  height: 42px;
+  border: 1.03px solid #b4b4b4;
+  border-radius: 27px;
+  background: #fff;
+  font-size: 11px;
+  color: #000;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ai5-budget.active {
+  background: #2a2a2a;
+  color: #fff;
+  border-color: #2a2a2a;
+}
+
+/* CTA 按鈕 top:746 w:360 h:52 */
+.ai5-cta-btn {
+  left: calc(50% - 180px);
+  top: 746px;
+  width: 360px;
+  height: 52px;
+  border: 0;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.52);
+  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.25);
+  font-size: 20px;
+  color: #000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  z-index: 6;
+}
+
+.ai5-cta-lightning {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* ─── 时间轴选择器 ─────────────────────── */
+
+.ai5-timeline-container {
+  position: absolute;
+  top: 256px;
+  left: 16px;
+  width: 361px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #d8d8d8;
+  border-radius: 9.778px;
+  padding: 16px;
+  z-index: 5;
+}
+
+.ai5-timeline-label {
+  margin: 0;
+  font-size: 11px;
+  color: #000;
+  font-weight: 400;
+  line-height: 16px;
+  margin-bottom: 12px;
+}
+
+.ai5-timeline-track {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ai5-timeline-min,
+.ai5-timeline-max {
+  font-size: 10px;
+  color: #919191;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.ai5-timeline-slider {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(to right, #b4b4b4 0%, #b4b4b4 100%);
+  border: none;
+  border-radius: 1px;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.ai5-timeline-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #461c3a;
+  cursor: pointer;
+  border: none;
+}
+
+.ai5-timeline-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #461c3a;
+  cursor: pointer;
+  border: none;
+}
+
+.ai5-timeline-current {
+  margin: 0;
+  text-align: right;
+  font-size: 10px;
+  color: #000;
+  line-height: 1;
 }
