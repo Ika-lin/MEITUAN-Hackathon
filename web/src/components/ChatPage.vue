@@ -1,5 +1,5 @@
 <script setup lang="ts">
-type Screen = 'discover' | 'ai1' | 'itinerary' | 'chat' | 'chatDetail'
+type Screen = 'discover' | 'ai1' | 'itinerary' | 'chat' | 'chatDetail' | 'profile'
 
 const emit = defineEmits<{
   navigate: [screen: Screen]
@@ -26,7 +26,7 @@ type Conversation = {
 const levelsAsset = '/Levels.svg'
 const searchAsset = '/uil_search.svg'
 const caretAsset = '/CaretRight.svg'
-const userAsset = '/Icon-1.svg'
+const userAsset = '/user.svg'
 const aiAsset = '/Icon.svg'
 const tripAsset = '/lucide_map.svg'
 const chatAsset = '/ChatTeardrop.svg'
@@ -194,7 +194,12 @@ function openConversation(conversation: Conversation) {
     <nav class="chat-nav" aria-label="底部导航">
       <div class="chat-nav-bg"></div>
 
-      <button type="button" class="chat-nav-btn chat-nav-btn-muted chat-nav-btn-user" aria-label="个人">
+      <button
+        type="button"
+        class="chat-nav-btn chat-nav-btn-muted chat-nav-btn-user"
+        aria-label="个人"
+        @click="emit('navigate', 'profile')"
+      >
         <img :src="userAsset" alt="" class="chat-nav-user-icon" />
       </button>
 
@@ -617,6 +622,7 @@ function openConversation(conversation: Conversation) {
 .chat-nav-user-icon {
   width: 14.4px;
   height: 14.4px;
+  filter: brightness(0);
 }
 
 .chat-nav-search-icon,

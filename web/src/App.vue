@@ -8,12 +8,15 @@ import PlaceDetailPage from './components/PlaceDetailPage.vue'
 import NavigationPage from './components/NavigationPage.vue'
 import ChatPage from './components/ChatPage.vue'
 import ChatThreadPage from './components/ChatThreadPage.vue'
+import ProfilePage from './components/ProfilePage.vue'
+import SettingsPage from './components/SettingsPage.vue'
 import type { PlaceDetail } from './data/placeDetails'
 
-type Screen = 'home1' | 'home2' | 'discover' | 'createPost' | 'ai1' | 'ai5' | 'itinerary' | 'placeDetail' | 'navigation' | 'chat' | 'chatDetail'
+type Screen = 'home1' | 'home2' | 'discover' | 'createPost' | 'ai1' | 'ai5' | 'itinerary' | 'placeDetail' | 'navigation' | 'chat' | 'chatDetail' | 'profile' | 'settings'
 
 const activeScreen = ref<Screen>('home1')
 const selectedPlaceDetail = ref<PlaceDetail | null>(null)
+const profileReturnScreen = ref<Screen>('ai1')
 
 interface CardData {
   title: string
@@ -131,8 +134,8 @@ const ai1MicGroupAsset = 'https://www.figma.com/api/mcp/asset/a2768da7-ad02-4777
 // 底部导航图标使用 public 下的本地正式资源
 const ai1MicAsset = '/ChatTeardrop.svg'
 const ai1SearchAsset = '/MagnifyingGlass.svg'
-const ai1NavCenterAsset = '/Icon.svg'
-const ai1NavLeftAsset = '/Icon-1.svg'
+const ai1NavCenterAsset = '/Icon-3.svg'
+const ai1NavLeftAsset = '/user.svg'
 const ai1NavRightAsset = '/lucide_map.svg'
 
 function goToHome2() {
@@ -148,6 +151,10 @@ function goToAi5() {
 }
 
 function setActiveScreen(screen: Screen) {
+  if (screen === 'profile' && activeScreen.value !== 'profile') {
+    profileReturnScreen.value = activeScreen.value
+  }
+
   activeScreen.value = screen
 }
 
@@ -162,6 +169,14 @@ function goBackToItinerary() {
 
 function goBackToChat() {
   activeScreen.value = 'chat'
+}
+
+function goBackFromProfile() {
+  activeScreen.value = profileReturnScreen.value === 'profile' ? 'ai1' : profileReturnScreen.value
+}
+
+function goBackFromSettings() {
+  activeScreen.value = 'profile'
 }
 
 // AI5 偏好页状态
@@ -485,7 +500,13 @@ function takeScreenshot() {
             <!-- 底部导航背景胶囊 (left:33 top:765 w:327 h:54) -->
             <div class="ai1-nav-bg" data-node-id="233:997"></div>
             <!-- 个人 (left:41 top:768 size:48) -->
-            <button type="button" class="ai1-nav-btn ai1-nav-btn-muted" style="left:41px;top:768px;" aria-label="个人">
+            <button
+              type="button"
+              class="ai1-nav-btn ai1-nav-btn-muted"
+              style="left:41px;top:768px;"
+              aria-label="个人"
+              @click="setActiveScreen('profile')"
+            >
               <img :src="ai1NavLeftAsset" alt="" class="ai1-nav-btn-user-icon" />
             </button>
             <!-- 发现 (left:113 top:768 size:48) -->
@@ -649,6 +670,14 @@ function takeScreenshot() {
 
           <main v-else-if="activeScreen === 'discover'" class="screen" data-node-id="156:553">
             <DiscoverPage @navigate="setActiveScreen" />
+          </main>
+
+          <main v-else-if="activeScreen === 'profile'" class="screen" data-node-id="156:729">
+            <ProfilePage @navigate="setActiveScreen" @back="goBackFromProfile" />
+          </main>
+
+          <main v-else-if="activeScreen === 'settings'" class="screen" data-node-id="187:265">
+            <SettingsPage @back="goBackFromSettings" />
           </main>
 
           <main v-else-if="activeScreen === 'createPost'" class="screen" data-node-id="181:320">

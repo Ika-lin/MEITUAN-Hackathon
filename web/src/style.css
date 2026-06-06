@@ -1555,6 +1555,7 @@ body {
   width: 14.4px;
   height: 14.4px;
   display: block;
+  filter: brightness(0);
 }
 
 .ai1-nav-btn-search-icon,
@@ -1568,6 +1569,10 @@ body {
   width: 22px;
   height: 22px;
   display: block;
+}
+
+.ai1-nav-btn-active .ai1-nav-btn-ai-icon {
+  filter: brightness(0) invert(1);
 }
 
 .ai1-nav-btn-trip-icon {

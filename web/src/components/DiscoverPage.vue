@@ -1,5 +1,5 @@
 <script setup lang="ts">
-type Screen = 'discover' | 'createPost' | 'ai1' | 'itinerary' | 'chat'
+type Screen = 'discover' | 'createPost' | 'ai1' | 'itinerary' | 'chat' | 'profile'
 
 const emit = defineEmits<{
   navigate: [screen: Screen]
@@ -23,7 +23,7 @@ const headerSearchAsset = '/Group 59.svg'
 const heartOutlineAsset = '/Icon-8.svg'
 const heartFilledAsset = '/Icon-5.svg'
 const searchAsset = '/MagnifyingGlass.svg'
-const userAsset = '/Icon-1.svg'
+const userAsset = '/user.svg'
 const aiAsset = '/Icon-3.svg'
 const tripAsset = '/lucide_map.svg'
 const chatAsset = '/ChatTeardrop.svg'
@@ -179,7 +179,12 @@ function isActiveCategory(label: string) {
     <nav class="discover-nav" aria-label="底部导航">
       <div class="discover-nav-bg"></div>
 
-      <button type="button" class="discover-nav-btn discover-nav-btn-muted discover-nav-btn-user" aria-label="个人">
+      <button
+        type="button"
+        class="discover-nav-btn discover-nav-btn-muted discover-nav-btn-user"
+        aria-label="个人"
+        @click="emit('navigate', 'profile')"
+      >
         <img :src="userAsset" alt="" class="discover-nav-user-icon" />
       </button>
 
@@ -616,6 +621,7 @@ function isActiveCategory(label: string) {
 .discover-nav-user-icon {
   width: 14.4px;
   height: 14.4px;
+  filter: brightness(0);
 }
 
 .discover-nav-search-icon,

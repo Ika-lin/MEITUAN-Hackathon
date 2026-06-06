@@ -4,7 +4,7 @@ import ItineraryMap from './ItineraryMap.vue'
 import { resolvePlaceDetail, type PlaceDetail } from '../data/placeDetails'
 
 const emit = defineEmits<{
-  navigate: [screen: 'ai1' | 'discover' | 'itinerary' | 'navigation' | 'chat']
+  navigate: [screen: 'ai1' | 'discover' | 'itinerary' | 'navigation' | 'chat' | 'profile']
   viewDetail: [detail: PlaceDetail]
 }>()
 
@@ -371,8 +371,14 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
     <nav class="itinerary-figma-nav" aria-label="底部导航">
       <div class="itinerary-figma-nav-bg"></div>
 
-      <button type="button" class="itinerary-figma-nav-btn itinerary-figma-nav-btn-muted" style="left:41px;top:768px;" aria-label="个人">
-        <img src="/Icon-1.svg" alt="" class="itinerary-figma-nav-user-icon" />
+      <button
+        type="button"
+        class="itinerary-figma-nav-btn itinerary-figma-nav-btn-muted"
+        style="left:41px;top:768px;"
+        aria-label="个人"
+        @click="emit('navigate', 'profile')"
+      >
+        <img src="/user.svg" alt="" class="itinerary-figma-nav-user-icon" />
       </button>
 
       <button
@@ -392,7 +398,7 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
         aria-label="AI"
         @click="emit('navigate', 'ai1')"
       >
-        <img src="/Icon.svg" alt="" class="itinerary-figma-nav-ai-icon" />
+        <img src="/Icon-3.svg" alt="" class="itinerary-figma-nav-ai-icon" />
       </button>
 
       <button
@@ -1265,6 +1271,7 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   width: 14.4px;
   height: 14.4px;
   display: block;
+  filter: brightness(0);
 }
 
 .itinerary-figma-nav-search-icon,
