@@ -1,10 +1,10 @@
-# 🚀 智能周末闲时规划助手 - iOS APP
+# 🚀 智能周末闲时规划助手
 
-**MEITUAN Hackathon 项目** - 帮助用户在碎片化空闲时间内快速发现和执行本地活动方案的 iOS 原生应用。
+**MEITUAN Hackathon 项目** - 帮助用户在碎片化空闲时间内快速发现和执行本地活动方案的全栈解决方案。
 
 ## 📱 项目概述
 
-这是一个**iOS 原生应用**，基于 **iPhone 17** 设计，采用 **SwiftUI** 开发框架。
+这是一个跨平台的智能周末规划系统，包含 **iOS 原生应用**和 **Web 管理后台**两个部分。
 
 **核心特性**：
 - 🎯 AI 智能推荐周末活动方案
@@ -13,59 +13,98 @@
 - 💾 用户收藏与历史记录管理
 - 🌙 深色模式完整支持
 - ♿ 无障碍访问（VoiceOver）支持
+- 🌐 Web 管理后台，支持内容和用户管理
+- ⚡ 现代化技术栈（SwiftUI + Vue 3）
 
-## 📚 文档结构
+## 📚 项目结构
+
+```
+MEITUAN-Hackathon-main/
+├── README.md                      # 项目总览文档
+├── DESIGN.md                      # 设计规范与视觉标准
+├── backend-api.md                 # 后端接口规范
+├── CAROUSEL-VERIFICATION.md       # 轮播验证规范
+├── click_function.md              # 功能清单模板
+│
+└── web/                           # Web 前端应用
+    ├── README.md                  # Web 部分快速开始
+    ├── package.json               # 项目依赖配置
+    ├── vite.config.ts             # Vite 构建配置
+    ├── tsconfig.json              # TypeScript 配置
+    ├── src/
+    │   ├── App.vue               # 主应用组件
+    │   ├── main.ts               # 入口文件
+    │   ├── style.css             # 全局样式
+    │   ├── components/           # 组件库
+    │   │   ├── HelloWorld.vue
+    │   │   └── PreferenceSelector.vue
+    │   └── assets/               # 静态资源
+    ├── public/
+    │   └── cards/                # 卡片资源
+    └── patch-*.mjs               # 构建脚本集合
+```
+
+## 📖 文档结构
 
 | 文件 | 说明 |
 |-----|------|
-| [DESIGN.md](DESIGN.md) | iOS 应用整体设计规范 |
-| [行程详情.md](行程详情.md) | 行程详情页 SwiftUI 实现规范 |
-| [iOS开发启动指南.md](iOS开发启动指南.md) | 项目初始化与开发环境配置 |
+| [DESIGN.md](DESIGN.md) | 应用整体设计规范（iPhone 16 标准） |
+| [backend-api.md](backend-api.md) | 后端接口规范与数据契约 |
+| [CAROUSEL-VERIFICATION.md](CAROUSEL-VERIFICATION.md) | 轮播验证规范 |
 | [click_function.md](click_function.md) | 功能清单模板 |
+| [web/README.md](web/README.md) | Web 前端快速开始指南 |
 
 ## 🚀 快速开始
 
-### 前置要求
+### iOS 应用部分
 
+#### 前置要求
 - **Xcode 15.0+**
 - **macOS 12.0+**
 - **iOS 15.0+ 部署目标**
 
-### 步骤 1：打开 Xcode 项目
+#### 步骤
 
+1. **打开 Xcode 项目**
+   ```bash
+   open MeituanWeekend.xcodeproj
+   ```
+
+2. **选择目标设备**（iPhone 16/17 Pro 模拟器）
+
+3. **构建并运行**
+   - 按 **Cmd + R** 或点击 Run 按钮
+
+4. **查看效果**
+   - 在发现页面浏览活动卡片
+   - 点击卡片查看详情
+   - 使用筛选标签过滤活动
+   - 通过底部导航栏切换规划、行程、我的页面
+
+### Web 前端部分
+
+#### 前置要求
+- **Node.js 18.0+**
+- **npm 9.0+ 或 pnpm 8.0+**
+
+#### 快速开始
 ```bash
-# 如果已有项目，直接打开
-open MeituanWeekend.xcodeproj
+cd web
 
-# 如果需要创建新项目，参考 iOS开发启动指南.md
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+
+# 构建生产版本
+npm run build
+
+# 预览生产构建
+npm run preview
 ```
 
-### 步骤 2：查看项目结构
-
-```
-MeituanWeekend/
-├── MeituanWeekendApp.swift      # 应用入口
-├── ContentView.swift             # 主视图与标签栏
-├── DiscoveryView.swift           # 发现页面
-├── ActivityCard.swift            # 活动卡片数据模型
-├── Extensions.swift              # 工具扩展
-├── NavigationManager.swift       # 导航管理器
-├── Colors.swift                  # 颜色定义（需创建）
-├── Fonts.swift                   # 字体定义（需创建）
-└── Constants.swift               # 常量定义（需创建）
-```
-
-### 步骤 3：运行应用
-
-1. 在 Xcode 中选择目标设备（iPhone 17 Pro 模拟器）
-2. 按 **Cmd + R** 构建并运行
-3. 应用将在模拟器上启动，展示发现页面
-
-### 步骤 4：查看效果
-
-- 点击发现页面的活动卡片
-- 尝试筛选标签
-- 使用底部导航栏切换页面（规划、行程、我的）
+更详细的说明请查看 [web/README.md](web/README.md)
 
 ## 📖 主要文件说明
 
