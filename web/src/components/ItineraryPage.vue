@@ -4,7 +4,7 @@ import ItineraryMap from './ItineraryMap.vue'
 import { resolvePlaceDetail, type PlaceDetail } from '../data/placeDetails'
 
 const emit = defineEmits<{
-  navigate: [screen: 'ai1' | 'discover' | 'itinerary' | 'navigation']
+  navigate: [screen: 'ai1' | 'discover' | 'itinerary' | 'navigation' | 'chat']
   viewDetail: [detail: PlaceDetail]
 }>()
 
@@ -406,7 +406,13 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
         <img src="/lucide_map.svg" alt="" class="itinerary-figma-nav-trip-icon" />
       </button>
 
-      <button type="button" class="itinerary-figma-nav-btn itinerary-figma-nav-btn-muted" style="left:305px;top:768px;" aria-label="聊天">
+      <button
+        type="button"
+        class="itinerary-figma-nav-btn itinerary-figma-nav-btn-muted"
+        style="left:305px;top:768px;"
+        aria-label="聊天"
+        @click="emit('navigate', 'chat')"
+      >
         <img src="/ChatTeardrop.svg" alt="" class="itinerary-figma-nav-chat-icon" />
       </button>
     </nav>

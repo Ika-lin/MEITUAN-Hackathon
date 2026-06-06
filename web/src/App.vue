@@ -3,11 +3,14 @@ import { ref } from 'vue'
 import { computed } from 'vue'
 import ItineraryPage from './components/ItineraryPage.vue'
 import DiscoverPage from './components/DiscoverPage.vue'
+import CreatePostPage from './components/CreatePostPage.vue'
 import PlaceDetailPage from './components/PlaceDetailPage.vue'
 import NavigationPage from './components/NavigationPage.vue'
+import ChatPage from './components/ChatPage.vue'
+import ChatThreadPage from './components/ChatThreadPage.vue'
 import type { PlaceDetail } from './data/placeDetails'
 
-type Screen = 'home1' | 'home2' | 'discover' | 'ai1' | 'ai5' | 'itinerary' | 'placeDetail' | 'navigation'
+type Screen = 'home1' | 'home2' | 'discover' | 'createPost' | 'ai1' | 'ai5' | 'itinerary' | 'placeDetail' | 'navigation' | 'chat' | 'chatDetail'
 
 const activeScreen = ref<Screen>('home1')
 const selectedPlaceDetail = ref<PlaceDetail | null>(null)
@@ -155,6 +158,10 @@ function openPlaceDetail(detail: PlaceDetail) {
 
 function goBackToItinerary() {
   activeScreen.value = 'itinerary'
+}
+
+function goBackToChat() {
+  activeScreen.value = 'chat'
 }
 
 // AI5 偏好页状态
@@ -513,7 +520,13 @@ function takeScreenshot() {
               <img :src="ai1NavRightAsset" alt="" class="ai1-nav-btn-trip-icon" />
             </button>
             <!-- 聊天 (left:305 top:768 size:48) -->
-            <button type="button" class="ai1-nav-btn ai1-nav-btn-muted" style="left:305px;top:768px;" aria-label="聊天">
+            <button
+              type="button"
+              class="ai1-nav-btn ai1-nav-btn-muted"
+              style="left:305px;top:768px;"
+              aria-label="聊天"
+              @click="setActiveScreen('chat')"
+            >
               <img :src="ai1MicAsset" alt="" class="ai1-nav-btn-chat-icon" />
             </button>
 
@@ -636,6 +649,18 @@ function takeScreenshot() {
 
           <main v-else-if="activeScreen === 'discover'" class="screen" data-node-id="156:553">
             <DiscoverPage @navigate="setActiveScreen" />
+          </main>
+
+          <main v-else-if="activeScreen === 'createPost'" class="screen" data-node-id="181:320">
+            <CreatePostPage @navigate="setActiveScreen" />
+          </main>
+
+          <main v-else-if="activeScreen === 'chat'" class="screen" data-node-id="155:61">
+            <ChatPage @navigate="setActiveScreen" />
+          </main>
+
+          <main v-else-if="activeScreen === 'chatDetail'" class="screen" data-node-id="155:314">
+            <ChatThreadPage @back="goBackToChat" />
           </main>
 
           <main v-else-if="activeScreen === 'navigation'" class="screen" data-node-id="174:375">

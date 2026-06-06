@@ -1,5 +1,5 @@
 <script setup lang="ts">
-type Screen = 'discover' | 'ai1' | 'itinerary'
+type Screen = 'discover' | 'createPost' | 'ai1' | 'itinerary' | 'chat'
 
 const emit = defineEmits<{
   navigate: [screen: Screen]
@@ -103,7 +103,7 @@ function isActiveCategory(label: string) {
       <img :src="levelsAsset" alt="" class="discover-levels" />
     </header>
 
-    <button type="button" class="discover-plus-btn" aria-label="新增内容">
+    <button type="button" class="discover-plus-btn" aria-label="新增内容" @click="emit('navigate', 'createPost')">
       <img :src="plusAsset" alt="" />
     </button>
 
@@ -210,7 +210,12 @@ function isActiveCategory(label: string) {
         <img :src="tripAsset" alt="" class="discover-nav-trip-icon" />
       </button>
 
-      <button type="button" class="discover-nav-btn discover-nav-btn-muted discover-nav-btn-chat" aria-label="聊天">
+      <button
+        type="button"
+        class="discover-nav-btn discover-nav-btn-muted discover-nav-btn-chat"
+        aria-label="聊天"
+        @click="emit('navigate', 'chat')"
+      >
         <img :src="chatAsset" alt="" class="discover-nav-chat-icon" />
         <span class="discover-nav-chat-dot" aria-hidden="true"></span>
       </button>
