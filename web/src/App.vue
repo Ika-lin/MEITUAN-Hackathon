@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { computed } from 'vue'
-<<<<<<< HEAD
-=======
-import ItineraryMap from './components/ItineraryMap.vue'
->>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
+import ItineraryPage from './components/ItineraryPage.vue'
+import DiscoverPage from './components/DiscoverPage.vue'
+import PlaceDetailPage from './components/PlaceDetailPage.vue'
+import NavigationPage from './components/NavigationPage.vue'
+import type { PlaceDetail } from './data/placeDetails'
 
-const activeScreen = ref<'home1' | 'home2' | 'ai1' | 'ai5' | 'itinerary'>('home1')
+type Screen = 'home1' | 'home2' | 'discover' | 'ai1' | 'ai5' | 'itinerary' | 'placeDetail' | 'navigation'
+
+const activeScreen = ref<Screen>('home1')
+const selectedPlaceDetail = ref<PlaceDetail | null>(null)
 
 interface CardData {
   title: string
@@ -118,13 +122,15 @@ const appleAsset = '/苹果.svg'
 // AI生成页1 Figma 资产
 const ai1LevelsAsset = 'https://www.figma.com/api/mcp/asset/35bb016e-759a-449f-b9af-7ef15e90c5f3'
 const ai1SparkIconAsset = 'https://www.figma.com/api/mcp/asset/6dd54065-b1b9-4654-8362-9e0c1ff8543e'
-const ai1MicAsset = 'https://www.figma.com/api/mcp/asset/4e819871-83a0-4659-aeb8-09d6741f852b'
 const ai1VectorAsset = 'https://www.figma.com/api/mcp/asset/491a50d0-2331-4679-9b9a-14a8c39322dd'
-const ai1SearchAsset = 'https://www.figma.com/api/mcp/asset/a2d32556-ed0d-45f1-b69d-e8fefe4c4c15'
-const ai1NavCenterAsset = 'https://www.figma.com/api/mcp/asset/2d7f8b06-66d4-41ff-9503-73c02a38afe8'
-const ai1NavLeftAsset = 'https://www.figma.com/api/mcp/asset/1b02c613-4c53-4f59-be0b-3831acae10bc'
-const ai1NavRightAsset = 'https://www.figma.com/api/mcp/asset/bbdb994e-672d-4cb1-816a-d8fcd62348c7'
 const ai1MicGroupAsset = 'https://www.figma.com/api/mcp/asset/a2768da7-ad02-4777-9a79-ecf393d548e3'
+
+// 底部导航图标使用 public 下的本地正式资源
+const ai1MicAsset = '/ChatTeardrop.svg'
+const ai1SearchAsset = '/MagnifyingGlass.svg'
+const ai1NavCenterAsset = '/Icon.svg'
+const ai1NavLeftAsset = '/Icon-1.svg'
+const ai1NavRightAsset = '/lucide_map.svg'
 
 function goToHome2() {
   activeScreen.value = 'home2'
@@ -136,6 +142,19 @@ function goToAi1() {
 
 function goToAi5() {
   activeScreen.value = 'ai5'
+}
+
+function setActiveScreen(screen: Screen) {
+  activeScreen.value = screen
+}
+
+function openPlaceDetail(detail: PlaceDetail) {
+  selectedPlaceDetail.value = detail
+  activeScreen.value = 'placeDetail'
+}
+
+function goBackToItinerary() {
+  activeScreen.value = 'itinerary'
 }
 
 // AI5 偏好页状态
@@ -159,8 +178,6 @@ function toggleAi5Activity(tag: string) {
   if (idx === -1) ai5Activities.value.push(tag)
   else ai5Activities.value.splice(idx, 1)
 }
-<<<<<<< HEAD
-=======
 
 // Phone simulator enhancements
 const deviceType = ref<'iphone14' | 'iphone15' | 'iphone16' | 'iphone16pro'>('iphone16')
@@ -196,15 +213,10 @@ function takeScreenshot() {
   // Simple approach: use html2canvas or built-in screenshot
   alert('Screenshot功能可通过集成html2canvas库实现 📸')
 }
->>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
 </script>
 
 <template>
   <div class="preview-page">
-<<<<<<< HEAD
-    <!-- iPhone 16 外壳 -->
-    <div class="iphone-shell">
-=======
     <!-- 控制面板 -->
     <div class="device-controls">
       <div class="control-section">
@@ -277,7 +289,6 @@ function takeScreenshot() {
         filter: `brightness(${screenBrightness}%)`
       }"
     >
->>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
       <div class="iphone-body">
         <div class="dynamic-island"></div>
 
@@ -466,22 +477,45 @@ function takeScreenshot() {
 
             <!-- 底部导航背景胶囊 (left:33 top:765 w:327 h:54) -->
             <div class="ai1-nav-bg" data-node-id="233:997"></div>
-            <!-- 头像/我的 (left:41 top:768 size:48) -->
-            <img :src="ai1NavLeftAsset" alt="我的" class="ai1-nav-icon-abs" style="left:41px;top:768px;" />
-            <!-- 搜索 (left:113 top:768 size:48) -->
-            <div class="ai1-nav-circle ai1-nav-dim" style="left:113px;top:768px;">
-              <img :src="ai1SearchAsset" alt="搜索" class="ai1-nav-inner" />
-            </div>
-            <!-- 主按钮黑圆 (left:177 top:768 size:48) -->
-            <div class="ai1-nav-circle ai1-nav-black" style="left:177px;top:768px;">
-              <img :src="ai1NavCenterAsset" alt="" class="ai1-nav-center-icon" />
-            </div>
-            <!-- 地图 (left:240 top:768 size:48) -->
-            <img :src="ai1NavRightAsset" alt="地图" class="ai1-nav-icon-abs" style="left:240px;top:768px;" />
-            <!-- 消息 (left:305 top:768 size:48) -->
-            <div class="ai1-nav-circle ai1-nav-dim" style="left:305px;top:768px;">
-              <img :src="ai1MicAsset" alt="消息" class="ai1-nav-inner" />
-            </div>
+            <!-- 个人 (left:41 top:768 size:48) -->
+            <button type="button" class="ai1-nav-btn ai1-nav-btn-muted" style="left:41px;top:768px;" aria-label="个人">
+              <img :src="ai1NavLeftAsset" alt="" class="ai1-nav-btn-user-icon" />
+            </button>
+            <!-- 发现 (left:113 top:768 size:48) -->
+            <button
+              type="button"
+              class="ai1-nav-btn ai1-nav-btn-muted"
+              style="left:113px;top:768px;"
+              aria-label="发现"
+              @click="setActiveScreen('discover')"
+            >
+              <img :src="ai1SearchAsset" alt="" class="ai1-nav-btn-search-icon" />
+            </button>
+            <!-- AI (left:177 top:768 size:48) -->
+            <button
+              type="button"
+              class="ai1-nav-btn ai1-nav-btn-active"
+              style="left:177px;top:768px;"
+              aria-label="AI"
+              aria-current="page"
+              @click="setActiveScreen('ai1')"
+            >
+              <img :src="ai1NavCenterAsset" alt="" class="ai1-nav-btn-ai-icon" />
+            </button>
+            <!-- 行程 (left:240 top:768 size:48) -->
+            <button
+              type="button"
+              class="ai1-nav-btn ai1-nav-btn-muted"
+              style="left:240px;top:768px;"
+              aria-label="行程"
+              @click="setActiveScreen('itinerary')"
+            >
+              <img :src="ai1NavRightAsset" alt="" class="ai1-nav-btn-trip-icon" />
+            </button>
+            <!-- 聊天 (left:305 top:768 size:48) -->
+            <button type="button" class="ai1-nav-btn ai1-nav-btn-muted" style="left:305px;top:768px;" aria-label="聊天">
+              <img :src="ai1MicAsset" alt="" class="ai1-nav-btn-chat-icon" />
+            </button>
 
             <!-- Home Indicator -->
             <footer class="home-indicator-wrap" data-node-id="210:651">
@@ -596,202 +630,20 @@ function takeScreenshot() {
           </main>
 
           <!-- 行程页 (node 156:994) -->
-          <main v-else-if="activeScreen === 'itinerary'" class="screen itinerary-screen" data-node-id="156:994">
-            <!-- 背景装饰 -->
-            <div class="itinerary-bg-decoration"></div>
+          <main v-else-if="activeScreen === 'itinerary'" class="screen" data-node-id="156:994">
+            <ItineraryPage @navigate="setActiveScreen" @view-detail="openPlaceDetail" />
+          </main>
 
-            <!-- 状态栏 -->
-            <header class="ai1-status-bar">
-              <div class="ai1-status-time">9:41</div>
-              <div class="ai1-status-island"></div>
-              <img :src="levelsAsset" alt="" class="ai1-status-levels" />
-            </header>
+          <main v-else-if="activeScreen === 'discover'" class="screen" data-node-id="156:553">
+            <DiscoverPage @navigate="setActiveScreen" />
+          </main>
 
-            <!-- 地址导航栏 -->
-            <div class="itinerary-address-bar">
-              <div class="itinerary-address-info">
-                <div class="itinerary-address-item">
-                  <span class="itinerary-icon">📍</span>
-                  <span class="itinerary-address-text">上海市徐汇区武康路 376 号附近</span>
-                </div>
-                <div class="itinerary-address-divider"></div>
-                <div class="itinerary-address-item">
-                  <span class="itinerary-icon">📍</span>
-                  <span class="itinerary-address-text">上海市徐汇区上海图书馆地铁站</span>
-                </div>
-              </div>
-              <div class="itinerary-action-buttons">
-                <button class="itinerary-icon-btn" aria-label="更多选项">⋮</button>
-                <button class="itinerary-icon-btn" aria-label="交换">🔄</button>
-              </div>
-            </div>
+          <main v-else-if="activeScreen === 'navigation'" class="screen" data-node-id="174:375">
+            <NavigationPage @back="goBackToItinerary" />
+          </main>
 
-<<<<<<< HEAD
-=======
-            <!-- 交互式地图 -->
-            <ItineraryMap />
-
->>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
-            <!-- 地图信息卡 -->
-            <div class="itinerary-map-card">
-              <p class="itinerary-map-title">步行时间</p>
-              <div class="itinerary-stats">
-                <div class="itinerary-stat">
-                  <span class="itinerary-stat-label">总路程</span>
-                  <span class="itinerary-stat-value">约1.8km</span>
-                </div>
-                <div class="itinerary-stat">
-                  <span class="itinerary-stat-label">交通方式</span>
-                  <span class="itinerary-stat-value">全程步行</span>
-                </div>
-                <div class="itinerary-stat">
-                  <span class="itinerary-stat-label">预算估测</span>
-                  <span class="itinerary-stat-value">¥230–350/人</span>
-                </div>
-                <div class="itinerary-stat">
-                  <span class="itinerary-stat-label">预计时间</span>
-                  <span class="itinerary-stat-value">约25分钟</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 行程卡片 -->
-            <div class="itinerary-cards-container">
-              <!-- 第1个卡片 -->
-              <div class="itinerary-card">
-                <div class="itinerary-card-time">14:08 - 14:55（50分钟）</div>
-                <div class="itinerary-card-number">1</div>
-                <h3 class="itinerary-card-name">FILM电影时光书店</h3>
-                <div class="itinerary-card-tags">
-                  <span class="itinerary-tag">电影主题</span>
-                  <span class="itinerary-tag">安静翻阅</span>
-                  <span class="itinerary-tag">胶片气质</span>
-                </div>
-                <p class="itinerary-card-price">人均 ¥43</p>
-                <div class="itinerary-card-actions">
-                  <button class="itinerary-btn-detail">查看详情</button>
-                  <button class="itinerary-btn-swap">换一个</button>
-                </div>
-              </div>
-
-              <!-- 中间步行时间 -->
-              <div class="itinerary-walking">
-                <span>⬇️</span>
-                <span class="itinerary-walking-text">步行约 5 分钟</span>
-              </div>
-
-              <!-- 第2个卡片 -->
-              <div class="itinerary-card">
-                <div class="itinerary-card-time">15:00 - 16:00（60分钟）</div>
-                <div class="itinerary-card-number">2</div>
-                <h3 class="itinerary-card-name">RAC BAR（安福路店）</h3>
-                <div class="itinerary-card-tags">
-                  <span class="itinerary-tag">街角咖啡</span>
-                  <span class="itinerary-tag">露台小坐</span>
-                  <span class="itinerary-tag">法式风情</span>
-                </div>
-                <p class="itinerary-card-price">人均 ¥120-150</p>
-                <div class="itinerary-card-actions">
-                  <button class="itinerary-btn-detail">查看详情</button>
-                  <button class="itinerary-btn-swap">换一个</button>
-                </div>
-              </div>
-
-              <!-- 中间步行时间 -->
-              <div class="itinerary-walking">
-                <span>⬇️</span>
-                <span class="itinerary-walking-text">步行约 8–10 分钟</span>
-              </div>
-
-              <!-- 第3个卡片 -->
-              <div class="itinerary-card">
-                <div class="itinerary-card-time">16:10 - 16:50（40分钟）</div>
-                <div class="itinerary-card-number">3</div>
-                <h3 class="itinerary-card-name">一面春风 （吴兴路总店/武康周边）</h3>
-                <div class="itinerary-card-tags">
-                  <span class="itinerary-tag">烟火小馆</span>
-                  <span class="itinerary-tag">本帮风味</span>
-                  <span class="itinerary-tag">匠心汤底</span>
-                </div>
-                <p class="itinerary-card-price">人均 ¥55-70</p>
-                <div class="itinerary-card-actions">
-                  <button class="itinerary-btn-detail">查看详情</button>
-                  <button class="itinerary-btn-swap">换一个</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- 出发前提醒 -->
-            <div class="itinerary-reminders">
-              <h3 class="itinerary-section-title">出发前提醒</h3>
-              <div class="itinerary-reminder-box">
-                <div class="itinerary-reminder-item">
-                  <strong>今日提醒</strong>
-                  <ul class="itinerary-reminder-list">
-                    <li>暴晒 25℃</li>
-                    <li>RAC BAR 可能等位</li>
-                    <li>已预留缓冲</li>
-                  </ul>
-                </div>
-                <div class="itinerary-reminder-item">
-                  <strong>建议携带</strong>
-                  <ul class="itinerary-reminder-checklist">
-                    <li><input type="checkbox"> 遮阳伞</li>
-                    <li><input type="checkbox"> 一台傻瓜胶片相机</li>
-                    <li><input type="checkbox"> 充电宝</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <!-- 调整选项 -->
-            <div class="itinerary-adjustments">
-              <h3 class="itinerary-section-title">想调整一下？</h3>
-              <div class="itinerary-adjustment-buttons">
-                <button class="itinerary-adjustment-btn">更轻松一点</button>
-                <button class="itinerary-adjustment-btn">避开排队</button>
-                <button class="itinerary-adjustment-btn itinerary-adjustment-btn-primary">减少步行</button>
-                <button class="itinerary-adjustment-btn itinerary-adjustment-btn-primary">重新生成</button>
-              </div>
-            </div>
-
-<<<<<<< HEAD
-            <!-- 底部导航 -->
-            <div class="itinerary-bottom-nav">
-              <button class="itinerary-nav-btn" aria-label="我的">👤</button>
-              <button class="itinerary-nav-btn" aria-label="搜索">🔍</button>
-              <button class="itinerary-nav-btn itinerary-nav-primary" aria-label="开始导航">🧭</button>
-              <button class="itinerary-nav-btn" aria-label="消息">💬</button>
-              <button class="itinerary-nav-btn" aria-label="返回AI1" @click="activeScreen = 'ai1'">×</button>
-=======
-            <!-- 底部导航（Figma 精确还原容器与图标占位） -->
-            <div class="itinerary-nav-wrapper">
-              <div class="ai1-nav-bg"></div>
-
-              <img src="/icons/user.svg" alt="我的" class="ai1-nav-icon-abs" style="left:41px;top:768px;" />
-
-              <div class="ai1-nav-circle ai1-nav-dim" style="left:113px;top:768px;">
-                <img src="/icons/search.svg" alt="搜索" class="ai1-nav-inner" />
-              </div>
-
-              <div class="ai1-nav-circle ai1-nav-dim" style="left:177px;top:768px;">
-                <img src="/icons/sparkle.svg" alt="推荐" class="ai1-nav-center-icon" />
-              </div>
-
-              <div class="ai1-nav-circle ai1-nav-black" style="left:241px;top:768px;">
-                <img src="/icons/map.svg" alt="地图" class="ai1-nav-inner" />
-              </div>
-
-              <div class="ai1-nav-circle ai1-nav-dim" style="left:305px;top:768px;">
-                <img src="/icons/message.svg" alt="消息" class="ai1-nav-inner" />
-              </div>
->>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
-            </div>
-
-            <!-- Home Indicator -->
-            <footer class="home-indicator-wrap">
-              <div class="home-indicator"></div>
-            </footer>
+          <main v-else-if="activeScreen === 'placeDetail'" class="screen" data-node-id="233:1138">
+            <PlaceDetailPage v-if="selectedPlaceDetail" :detail="selectedPlaceDetail" @back="goBackToItinerary" />
           </main>
         </div>
       </div>
