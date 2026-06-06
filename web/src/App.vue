@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { computed } from 'vue'
+<<<<<<< HEAD
+=======
+import ItineraryMap from './components/ItineraryMap.vue'
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
 
 const activeScreen = ref<'home1' | 'home2' | 'ai1' | 'ai5' | 'itinerary'>('home1')
 
@@ -155,12 +159,125 @@ function toggleAi5Activity(tag: string) {
   if (idx === -1) ai5Activities.value.push(tag)
   else ai5Activities.value.splice(idx, 1)
 }
+<<<<<<< HEAD
+=======
+
+// Phone simulator enhancements
+const deviceType = ref<'iphone14' | 'iphone15' | 'iphone16' | 'iphone16pro'>('iphone16')
+const isRotated = ref(false)
+const screenBrightness = ref(100)
+const screenZoom = ref(100)
+
+const deviceSpecs = {
+  iphone14: { name: 'iPhone 14', width: 390, height: 844 },
+  iphone15: { name: 'iPhone 15', width: 393, height: 852 },
+  iphone16: { name: 'iPhone 16', width: 393, height: 852 },
+  iphone16pro: { name: 'iPhone 16 Pro', width: 402, height: 874 }
+}
+
+function toggleRotate() {
+  isRotated.value = !isRotated.value
+}
+
+function resetSimulator() {
+  screenBrightness.value = 100
+  screenZoom.value = 100
+  isRotated.value = false
+}
+
+function changeDevice(device: typeof deviceType.value) {
+  deviceType.value = device
+}
+
+function takeScreenshot() {
+  const shell = document.querySelector('.iphone-shell') as HTMLElement
+  if (!shell) return
+  
+  // Simple approach: use html2canvas or built-in screenshot
+  alert('Screenshot功能可通过集成html2canvas库实现 📸')
+}
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
 </script>
 
 <template>
   <div class="preview-page">
+<<<<<<< HEAD
     <!-- iPhone 16 外壳 -->
     <div class="iphone-shell">
+=======
+    <!-- 控制面板 -->
+    <div class="device-controls">
+      <div class="control-section">
+        <label class="control-label">设备选择</label>
+        <div class="device-buttons">
+          <button
+            v-for="(spec, device) in deviceSpecs"
+            :key="device"
+            :class="['device-btn', { active: deviceType === device }]"
+            @click="changeDevice(device as any)"
+          >
+            {{ spec.name }}
+          </button>
+        </div>
+      </div>
+
+      <div class="control-section">
+        <label class="control-label">屏幕亮度: {{ screenBrightness }}%</label>
+        <input
+          v-model.number="screenBrightness"
+          type="range"
+          min="30"
+          max="100"
+          class="slider"
+        />
+      </div>
+
+      <div class="control-section">
+        <label class="control-label">缩放: {{ screenZoom }}%</label>
+        <input
+          v-model.number="screenZoom"
+          type="range"
+          min="50"
+          max="150"
+          step="10"
+          class="slider"
+        />
+      </div>
+
+      <div class="control-section">
+        <div class="control-buttons">
+          <button
+            :class="['control-btn', { active: isRotated }]"
+            @click="toggleRotate"
+            title="旋转设备"
+          >
+            🔄 旋转
+          </button>
+          <button class="control-btn" @click="resetSimulator" title="重置模拟器">
+            ↺ 重置
+          </button>
+          <button class="control-btn" @click="takeScreenshot" title="截图">
+            📸 截图
+          </button>
+        </div>
+      </div>
+
+      <div class="device-info">
+        <p><strong>当前设备:</strong> {{ deviceSpecs[deviceType].name }}</p>
+        <p><strong>分辨率:</strong> {{ deviceSpecs[deviceType].width }} × {{ deviceSpecs[deviceType].height }}</p>
+        <p><strong>状态:</strong> {{ isRotated ? '横屏模式' : '竖屏模式' }}</p>
+      </div>
+    </div>
+
+    <!-- iPhone 外壳 -->
+    <div
+      class="iphone-shell"
+      :style="{
+        transform: `${isRotated ? 'rotate(90deg)' : ''} scale(${screenZoom / 100})`,
+        filter: `brightness(${screenBrightness}%)`
+      }"
+    >
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
       <div class="iphone-body">
         <div class="dynamic-island"></div>
 
@@ -509,6 +626,12 @@ function toggleAi5Activity(tag: string) {
               </div>
             </div>
 
+<<<<<<< HEAD
+=======
+            <!-- 交互式地图 -->
+            <ItineraryMap />
+
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
             <!-- 地图信息卡 -->
             <div class="itinerary-map-card">
               <p class="itinerary-map-title">步行时间</p>
@@ -632,6 +755,7 @@ function toggleAi5Activity(tag: string) {
               </div>
             </div>
 
+<<<<<<< HEAD
             <!-- 底部导航 -->
             <div class="itinerary-bottom-nav">
               <button class="itinerary-nav-btn" aria-label="我的">👤</button>
@@ -639,6 +763,29 @@ function toggleAi5Activity(tag: string) {
               <button class="itinerary-nav-btn itinerary-nav-primary" aria-label="开始导航">🧭</button>
               <button class="itinerary-nav-btn" aria-label="消息">💬</button>
               <button class="itinerary-nav-btn" aria-label="返回AI1" @click="activeScreen = 'ai1'">×</button>
+=======
+            <!-- 底部导航（Figma 精确还原容器与图标占位） -->
+            <div class="itinerary-nav-wrapper">
+              <div class="ai1-nav-bg"></div>
+
+              <img src="/icons/user.svg" alt="我的" class="ai1-nav-icon-abs" style="left:41px;top:768px;" />
+
+              <div class="ai1-nav-circle ai1-nav-dim" style="left:113px;top:768px;">
+                <img src="/icons/search.svg" alt="搜索" class="ai1-nav-inner" />
+              </div>
+
+              <div class="ai1-nav-circle ai1-nav-dim" style="left:177px;top:768px;">
+                <img src="/icons/sparkle.svg" alt="推荐" class="ai1-nav-center-icon" />
+              </div>
+
+              <div class="ai1-nav-circle ai1-nav-black" style="left:241px;top:768px;">
+                <img src="/icons/map.svg" alt="地图" class="ai1-nav-inner" />
+              </div>
+
+              <div class="ai1-nav-circle ai1-nav-dim" style="left:305px;top:768px;">
+                <img src="/icons/message.svg" alt="消息" class="ai1-nav-inner" />
+              </div>
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
             </div>
 
             <!-- Home Indicator -->

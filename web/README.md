@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🌐 Web 前端应用 - 智能周末闲时规划助手
 
 这是智能周末闲时规划助手的 Web 前端部分，基于 **Vue 3** 和 **TypeScript** 构建，使用 **Vite** 作为现代化的构建工具。
@@ -137,3 +138,10 @@ const handleClick = () => {
 - [设计规范](../DESIGN.md)
 - [后端 API 规范](../backend-api.md)
 - [功能清单](../click_function.md)
+=======
+# Vue 3 + TypeScript + Vite
+
+This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+
+Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)

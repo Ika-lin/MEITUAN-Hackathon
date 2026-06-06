@@ -12,6 +12,166 @@
   -webkit-font-smoothing: antialiased;
 }
 
+<<<<<<< HEAD
+=======
+/* ========== DEVICE SIMULATOR CONTROLS ========== */
+
+.device-controls {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
+  width: 280px;
+  max-height: 90vh;
+  overflow-y: auto;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.control-section {
+  margin-bottom: 18px;
+}
+
+.control-section:last-child {
+  margin-bottom: 0;
+}
+
+.control-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2a2a2a;
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.device-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.device-btn {
+  padding: 10px 12px;
+  border: 2px solid #e8e8e8;
+  background: white;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.device-btn:hover {
+  border-color: #461c3a;
+  color: #461c3a;
+  background: rgba(70, 28, 58, 0.05);
+}
+
+.device-btn.active {
+  background: #461c3a;
+  color: white;
+  border-color: #461c3a;
+}
+
+.slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #e8e8e8;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #461c3a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(70, 28, 58, 0.3);
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #461c3a;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(70, 28, 58, 0.3);
+}
+
+.slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+}
+
+.control-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.control-btn {
+  padding: 10px 12px;
+  border: 1px solid #d8d8d8;
+  background: white;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #2a2a2a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.control-btn:hover {
+  background: #f5f5f5;
+  border-color: #b8b8b8;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.control-btn.active {
+  background: #f0e8f0;
+  border-color: #461c3a;
+  color: #461c3a;
+}
+
+.device-info {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 12px;
+  border-left: 3px solid #461c3a;
+}
+
+.device-info p {
+  margin: 6px 0;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.device-info strong {
+  color: #2a2a2a;
+  font-weight: 600;
+}
+
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
 /* ========== ITINERARY SCREEN (node 156:994) ========== */
 
 .itinerary-screen {
@@ -420,11 +580,18 @@
 
 /* 底部导航 */
 .itinerary-bottom-nav {
+<<<<<<< HEAD
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   width: var(--screen-w);
+=======
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
   height: 54px;
   background: rgba(255, 255, 255, 0.95);
   border-top: 1px solid #f0f0f0;
@@ -432,7 +599,30 @@
   justify-content: space-around;
   align-items: center;
   backdrop-filter: blur(10px);
+<<<<<<< HEAD
   z-index: 100;
+=======
+  z-index: 50;
+}
+
+/* 将第四个图标突出为黑色圆圈，视觉与 AI 页一致 */
+.itinerary-bottom-nav .itinerary-nav-btn:nth-child(4) {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #000;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* 保持其他按钮尺寸一致 */
+.itinerary-bottom-nav .itinerary-nav-btn {
+  width: 44px;
+  height: 44px;
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
 }
 
 .itinerary-nav-btn {
@@ -468,6 +658,65 @@
   background: rgba(74, 125, 184, 0.2);
 }
 
+<<<<<<< HEAD
+=======
+/* Map Component Styling */
+.itinerary-map-wrapper {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  height: 280px;
+  margin: 16px;
+  margin-top: -8px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.itinerary-map-container {
+  width: 100%;
+  height: 100%;
+  background: #f5f5f5;
+}
+
+/* Leaflet overrides */
+.leaflet-container {
+  font-family: "SF Pro Rounded", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #f5f5f5 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  background: white !important;
+}
+
+.leaflet-popup-content {
+  font-size: 13px;
+  color: #2a2a2a;
+  margin: 8px 0 !important;
+  font-weight: 500;
+}
+
+.leaflet-popup-tip {
+  background: white !important;
+}
+
+.leaflet-marker-icon {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+}
+
+.leaflet-control-container {
+  display: none !important;
+}
+
+/* Custom marker styles */
+.itinerary-marker {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3)) !important;
+}
+
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
 *,
 *::before,
 *::after {
@@ -493,12 +742,23 @@ body {
   align-items: flex-start;
   justify-content: center;
   padding: 32px 20px 48px;
+<<<<<<< HEAD
   overflow: auto;
+=======
+  padding-left: 320px;
+  overflow: auto;
+  background: linear-gradient(145deg, #eaeaec 0%, #d8d8da 100%);
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
 }
 
 .iphone-shell {
   position: relative;
   flex-shrink: 0;
+<<<<<<< HEAD
+=======
+  transition: all 0.3s ease;
+  transform-origin: center center;
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
 }
 
 .iphone-body {
@@ -545,9 +805,26 @@ body {
   width: var(--screen-w);
   height: var(--screen-h);
   border-radius: var(--screen-r);
+<<<<<<< HEAD
   overflow: hidden;
   position: relative;
   background: #f9f9f9;
+=======
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  background: #f9f9f9;
+  padding-bottom: 140px; /* 为底栏留出空间，避免内容被挡住 */
+}
+/* 隐藏滚动条，但保留滚动行为（支持 Chromium / Firefox / IE） */
+.app-container::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.app-container {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
 }
 
 .side-buttons {
@@ -604,7 +881,11 @@ body {
   width: var(--screen-w);
   height: var(--screen-h);
   background: #f9f9f9;
+<<<<<<< HEAD
   overflow: hidden;
+=======
+  overflow: visible;
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
 }
 
 .home1-screen {
@@ -1352,6 +1633,24 @@ body {
 @media (max-width: 460px) {
   .preview-page {
     padding: 16px 8px 24px;
+<<<<<<< HEAD
+=======
+    padding-left: 16px;
+  }
+
+  .device-controls {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    max-height: none;
+    margin-bottom: 20px;
+  }
+
+  .iphone-shell {
+    transform: scale(0.85) !important;
+    margin-top: 20px;
+>>>>>>> c1b5688 (Implement itinerary page UI, hide scrollbars, add bottom nav layout and placeholder icons)
   }
 }
 
