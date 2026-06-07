@@ -21,7 +21,7 @@ const userAsset = '/user.svg'
 const searchAsset = '/MagnifyingGlass.svg'
 const aiAsset = '/Icon-3.svg'
 const tripAsset = '/lucide_map.svg'
-const chatAsset = '/ChatTeardrop.svg'
+const chatAsset = '/ChatTeardrop-dark.svg'
 const settingsMenuItems: SettingsMenuItem[] = [
   { label: '设置', screen: 'settings' },
   { label: '主页编辑' },
@@ -254,7 +254,6 @@ onBeforeUnmount(() => {
 
       <button type="button" class="profile-nav-btn profile-nav-btn-muted profile-nav-btn-chat" aria-label="聊天" @click="emit('navigate', 'chat')">
         <img :src="chatAsset" alt="" class="profile-nav-chat-icon" />
-        <span class="profile-nav-chat-dot" aria-hidden="true"></span>
       </button>
     </nav>
 
@@ -755,10 +754,6 @@ onBeforeUnmount(() => {
   height: 16px;
 }
 
-.profile-nav-chat-icon {
-  filter: brightness(0);
-}
-
 .profile-nav-ai-icon {
   width: 22px;
   height: 22px;
@@ -771,15 +766,6 @@ onBeforeUnmount(() => {
   filter: brightness(0);
 }
 
-.profile-nav-chat-dot {
-  position: absolute;
-  top: 11px;
-  right: 10px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #4a7db8;
-}
 
 .profile-home-indicator-wrap {
   position: absolute;

@@ -29,7 +29,7 @@ const caretAsset = '/CaretRight.svg'
 const userAsset = '/user.svg'
 const aiAsset = '/Icon.svg'
 const tripAsset = '/lucide_map.svg'
-const chatAsset = '/ChatTeardrop.svg'
+const chatAsset = '/ChatTeardrop-light.svg'
 const groupChatCoverAsset = '/group-chat-cover.png'
 
 const stories: Story[] = [
@@ -237,7 +237,6 @@ function openConversation(conversation: Conversation) {
         aria-current="page"
       >
         <img :src="chatAsset" alt="" class="chat-nav-chat-icon" />
-        <span class="chat-nav-chat-dot" aria-hidden="true"></span>
       </button>
     </nav>
 
@@ -627,8 +626,8 @@ function openConversation(conversation: Conversation) {
 
 .chat-nav-search-icon,
 .chat-nav-chat-icon {
-  width: 16px;
-  height: 16px;
+  width: 13px;
+  height: 13px;
 }
 
 .chat-nav-ai-icon,
@@ -637,19 +636,6 @@ function openConversation(conversation: Conversation) {
   height: 18px;
 }
 
-.chat-nav-btn-active .chat-nav-chat-icon {
-  filter: brightness(0) invert(1);
-}
-
-.chat-nav-chat-dot {
-  position: absolute;
-  top: 11px;
-  right: 10px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #4a7db8;
-}
 
 .chat-home-indicator-wrap {
   position: absolute;

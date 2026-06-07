@@ -21,7 +21,7 @@ const navProfileAsset = '/user.svg'
 const navSearchAsset = '/MagnifyingGlass.svg'
 const navAiAsset = '/Icon-3.svg'
 const navTripAsset = '/lucide_map.svg'
-const navChatAsset = '/ChatTeardrop.svg'
+const navChatAsset = '/ChatTeardrop-dark.svg'
 
 type ItineraryStop = {
   id: number
@@ -49,6 +49,50 @@ type StopLayout = {
   markerTop: number
   connectorTop: number
   connectorHeight: number
+}
+
+type ReminderItem = {
+  id: string
+  text: string
+  done: boolean
+}
+
+type PackingItem = {
+  id: string
+  text: string
+  checked: boolean
+}
+
+type AdjustmentItem = {
+  id: string
+  label: string
+  emphasized: boolean
+}
+
+const defaultStartLocation = '上海市徐汇区武康路 376 号附近'
+const defaultEndLocation = '上海市徐汇区上海图书馆地铁站'
+
+const startLocation = ref(defaultStartLocation)
+const endLocation = ref(defaultEndLocation)
+
+let dynamicItemSeed = 0
+
+function createDynamicId(prefix: string) {
+  dynamicItemSeed += 1
+  return `${prefix}-${dynamicItemSeed}`
+}
+
+const routeOriginLabel = computed(() => startLocation.value.trim() || defaultStartLocation)
+
+function restoreLocationDefaults() {
+  startLocation.value = defaultStartLocation
+  endLocation.value = defaultEndLocation
+}
+
+function swapLocations() {
+  const previousStart = startLocation.value
+  startLocation.value = endLocation.value
+  endLocation.value = previousStart
 }
 
 const itinerarySummaryStats = [
@@ -211,16 +255,105 @@ function openStopDetail(stop: ItineraryStop) {
   )
 }
 
-const itineraryReminders = ['暴晒 25℃', 'RAC BAR 可能等位', '已预留缓冲']
-const itineraryPackingList = ['遮阳伞', '一台傻瓜胶片相机', '充电宝']
-const itineraryAdjustments = [
-  { label: '更轻松一点', emphasized: false },
-  { label: '减少步行', emphasized: false },
-  { label: '避开排队', emphasized: false },
-  { label: '重新生成', emphasized: true },
-]
-const itineraryPrompt = '今天突然下雨了，不去室外'
+const itineraryReminders = ref<ReminderItem[]>([
+  { id: 'reminder-1', text: '暴晒 25℃', done: false },
+  { id: 'reminder-2', text: 'RAC BAR 可能等位', done: false },
+  { id: 'reminder-3', text: '已预留缓冲', done: false },
+])
+
+const itineraryPackingList = ref<PackingItem[]>([
+  { id: 'packing-1', text: '遮阳伞', checked: false },
+  { id: 'packing-2', text: '一台傻瓜胶片相机', checked: false },
+  { id: 'packing-3', text: '充电宝', checked: false },
+])
+
+const itineraryAdjustments = ref<AdjustmentItem[]>([
+  { id: 'adjustment-1', label: '更轻松一点', emphasized: false },
+  { id: 'adjustment-2', label: '减少步行', emphasized: false },
+  { id: 'adjustment-3', label: '避开排队', emphasized: false },
+  { id: 'adjustment-4', label: '重新生成', emphasized: true },
+])
+
+const reminderDraft = ref('')
+const packingDraft = ref('')
+const adjustmentDraft = ref('')
+const selectedAdjustmentId = ref<string | null>(null)
+const itineraryPrompt = ref('今天突然下雨了，不去室外')
 const itineraryFinalWalk = '步行约 8-10 分钟'
+
+function addReminder() {
+  const text = reminderDraft.value.trim()
+  if (!text) return
+
+  itineraryReminders.value.push({
+    id: createDynamicId('reminder'),
+    text,
+    done: false,
+  })
+  reminderDraft.value = ''
+}
+
+function toggleReminder(id: string) {
+  const reminder = itineraryReminders.value.find((item) => item.id === id)
+  if (!reminder) return
+
+  reminder.done = !reminder.done
+}
+
+function removeReminder(id: string) {
+  itineraryReminders.value = itineraryReminders.value.filter((item) => item.id !== id)
+}
+
+function addPackingItem() {
+  const text = packingDraft.value.trim()
+  if (!text) return
+
+  itineraryPackingList.value.push({
+    id: createDynamicId('packing'),
+    text,
+    checked: false,
+  })
+  packingDraft.value = ''
+}
+
+function togglePackingItem(id: string) {
+  const packingItem = itineraryPackingList.value.find((item) => item.id === id)
+  if (!packingItem) return
+
+  packingItem.checked = !packingItem.checked
+}
+
+function removePackingItem(id: string) {
+  itineraryPackingList.value = itineraryPackingList.value.filter((item) => item.id !== id)
+}
+
+function selectAdjustment(item: AdjustmentItem) {
+  selectedAdjustmentId.value = selectedAdjustmentId.value === item.id ? null : item.id
+  itineraryPrompt.value = item.label
+}
+
+function addAdjustment() {
+  const label = adjustmentDraft.value.trim()
+  if (!label) return
+
+  const nextItem = {
+    id: createDynamicId('adjustment'),
+    label,
+    emphasized: false,
+  }
+
+  itineraryAdjustments.value.push(nextItem)
+  adjustmentDraft.value = ''
+  selectAdjustment(nextItem)
+}
+
+function removeAdjustment(id: string) {
+  itineraryAdjustments.value = itineraryAdjustments.value.filter((item) => item.id !== id)
+
+  if (selectedAdjustmentId.value === id) {
+    selectedAdjustmentId.value = null
+  }
+}
 
 onMounted(() => {
   scrollRoot.value?.scrollTo({ top: 0 })
@@ -251,23 +384,35 @@ onMounted(() => {
         <section class="itinerary-figma-address-shell">
           <div class="itinerary-figma-address-card">
             <div class="itinerary-figma-address-details">
-              <div class="itinerary-figma-address-line itinerary-figma-address-line-muted">
+              <label class="itinerary-figma-address-line itinerary-figma-address-line-muted">
                 <img :src="addressStartAsset" alt="" class="itinerary-figma-address-icon itinerary-figma-address-icon-muted" />
-                <span class="itinerary-figma-address-text">上海市徐汇区武康路 376 号附近</span>
-              </div>
+                <input
+                  v-model="startLocation"
+                  type="text"
+                  class="itinerary-figma-address-input"
+                  aria-label="起始点位置"
+                  :placeholder="defaultStartLocation"
+                />
+              </label>
               <div class="itinerary-figma-address-divider"></div>
-              <div class="itinerary-figma-address-line itinerary-figma-address-line-strong">
+              <label class="itinerary-figma-address-line itinerary-figma-address-line-strong">
                 <img :src="addressEndAsset" alt="" class="itinerary-figma-address-icon" />
-                <span class="itinerary-figma-address-text">上海市徐汇区上海图书馆地铁站</span>
-              </div>
+                <input
+                  v-model="endLocation"
+                  type="text"
+                  class="itinerary-figma-address-input"
+                  aria-label="终点位置"
+                  :placeholder="defaultEndLocation"
+                />
+              </label>
             </div>
           </div>
 
           <div class="itinerary-figma-address-actions">
-            <button type="button" class="itinerary-figma-address-action" aria-label="更多选项">
+            <button type="button" class="itinerary-figma-address-action" aria-label="恢复默认地点" @click="restoreLocationDefaults">
               <img :src="moreVerticalAsset" alt="" class="itinerary-figma-address-action-icon" />
             </button>
-            <button type="button" class="itinerary-figma-address-action" aria-label="交换起终点">
+            <button type="button" class="itinerary-figma-address-action" aria-label="交换起终点" @click="swapLocations">
               <img :src="swapAsset" alt="" class="itinerary-figma-address-action-icon" />
             </button>
           </div>
@@ -292,7 +437,7 @@ onMounted(() => {
 
         <div class="itinerary-figma-route-origin">
           <img :src="addressStartAsset" alt="" class="itinerary-figma-route-origin-icon" />
-          <span class="itinerary-figma-route-origin-text">上海市徐汇区武康路 376 号附近</span>
+          <span class="itinerary-figma-route-origin-text">{{ routeOriginLabel }}</span>
         </div>
 
         <template v-for="stop in positionedStops" :key="stop.id">
@@ -346,24 +491,6 @@ onMounted(() => {
           <span>{{ itineraryFinalWalk }}</span>
         </div>
 
-        <nav class="itinerary-figma-nav" aria-label="底部导航">
-          <button type="button" class="itinerary-figma-nav-btn" aria-label="个人" @click="emit('navigate', 'profile')">
-            <img :src="navProfileAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-profile" />
-          </button>
-          <button type="button" class="itinerary-figma-nav-btn" aria-label="发现" @click="emit('navigate', 'discover')">
-            <img :src="navSearchAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-search" />
-          </button>
-          <button type="button" class="itinerary-figma-nav-btn" aria-label="AI" @click="emit('navigate', 'ai1')">
-            <img :src="navAiAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-ai" />
-          </button>
-          <button type="button" class="itinerary-figma-nav-btn itinerary-figma-nav-btn-active" aria-label="行程" aria-current="page" @click="emit('navigate', 'itinerary')">
-            <img :src="navTripAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-trip" />
-          </button>
-          <button type="button" class="itinerary-figma-nav-btn itinerary-figma-nav-btn-chat" aria-label="聊天" @click="emit('navigate', 'chat')">
-            <img :src="navChatAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-chat" />
-          </button>
-        </nav>
-
         <section class="itinerary-figma-reminder-section">
           <h3 class="itinerary-figma-section-title">出发前提醒</h3>
 
@@ -371,18 +498,57 @@ onMounted(() => {
             <article class="itinerary-figma-reminder-card">
               <h4 class="itinerary-figma-reminder-title">今日提醒</h4>
               <ul class="itinerary-figma-reminder-list">
-                <li v-for="item in itineraryReminders" :key="item">{{ item }}</li>
+                <li
+                  v-for="item in itineraryReminders"
+                  :key="item.id"
+                  :class="{ 'itinerary-figma-reminder-item-done': item.done }"
+                >
+                  <button type="button" class="itinerary-figma-reminder-row" @click="toggleReminder(item.id)">
+                    <span class="itinerary-figma-reminder-bullet" aria-hidden="true"></span>
+                    <span>{{ item.text }}</span>
+                  </button>
+                  <button type="button" class="itinerary-figma-item-remove" aria-label="删除提醒" @click="removeReminder(item.id)">×</button>
+                </li>
               </ul>
+
+              <form class="itinerary-figma-inline-form" @submit.prevent="addReminder">
+                <input
+                  v-model="reminderDraft"
+                  type="text"
+                  class="itinerary-figma-inline-input"
+                  aria-label="新增提醒"
+                  placeholder="添加提醒"
+                />
+                <button type="submit" class="itinerary-figma-inline-btn">添加</button>
+              </form>
             </article>
 
             <article class="itinerary-figma-reminder-card">
               <h4 class="itinerary-figma-reminder-title">建议携带</h4>
               <ul class="itinerary-figma-packing-list">
-                <li v-for="item in itineraryPackingList" :key="item">
-                  <span class="itinerary-figma-checkbox" aria-hidden="true"></span>
-                  <span>{{ item }}</span>
+                <li
+                  v-for="item in itineraryPackingList"
+                  :key="item.id"
+                  :class="{ 'itinerary-figma-packing-item-checked': item.checked }"
+                >
+                  <button type="button" class="itinerary-figma-packing-row" @click="togglePackingItem(item.id)">
+                    <span class="itinerary-figma-checkbox" :class="{ 'itinerary-figma-checkbox-checked': item.checked }" aria-hidden="true"></span>
+                    <span>{{ item.text }}</span>
+                  </button>
+                  <button type="button" class="itinerary-figma-item-remove" aria-label="删除携带物品" @click="removePackingItem(item.id)">×</button>
                 </li>
               </ul>
+
+              <form class="itinerary-figma-inline-form" @submit.prevent="addPackingItem">
+                <input
+                  v-model="packingDraft"
+                  type="text"
+                  class="itinerary-figma-inline-input"
+                  aria-label="新增携带物品"
+                  placeholder="添加物品"
+                />
+                <button type="submit" class="itinerary-figma-inline-btn">添加</button>
+              </form>
             </article>
           </div>
         </section>
@@ -391,21 +557,43 @@ onMounted(() => {
           <h3 class="itinerary-figma-section-title">想调整一下？</h3>
 
           <div class="itinerary-figma-adjust-grid">
-            <button
-              v-for="item in itineraryAdjustments"
-              :key="item.label"
-              type="button"
-              class="itinerary-figma-adjust-btn"
-              :class="{ 'itinerary-figma-adjust-btn-emphasis': item.emphasized }"
-            >
-              {{ item.label }}
-            </button>
+            <div v-for="item in itineraryAdjustments" :key="item.id" class="itinerary-figma-adjust-item">
+              <button
+                type="button"
+                class="itinerary-figma-adjust-btn"
+                :class="{
+                  'itinerary-figma-adjust-btn-emphasis': item.emphasized,
+                  'itinerary-figma-adjust-btn-selected': item.id === selectedAdjustmentId,
+                }"
+                @click="selectAdjustment(item)"
+              >
+                {{ item.label }}
+              </button>
+              <button type="button" class="itinerary-figma-adjust-remove" aria-label="删除调整项" @click="removeAdjustment(item.id)">×</button>
+            </div>
           </div>
+
+          <form class="itinerary-figma-inline-form itinerary-figma-inline-form-adjust" @submit.prevent="addAdjustment">
+            <input
+              v-model="adjustmentDraft"
+              type="text"
+              class="itinerary-figma-inline-input"
+              aria-label="新增调整项"
+              placeholder="添加新的调整方向"
+            />
+            <button type="submit" class="itinerary-figma-inline-btn">添加</button>
+          </form>
         </section>
 
         <div class="itinerary-figma-composer">
           <span class="itinerary-figma-composer-star" aria-hidden="true">✦</span>
-          <span class="itinerary-figma-composer-text">{{ itineraryPrompt }}</span>
+          <input
+            v-model="itineraryPrompt"
+            type="text"
+            class="itinerary-figma-composer-input"
+            aria-label="输入行程要求"
+            placeholder="今天突然下雨了，不去室外"
+          />
           <button type="button" class="itinerary-figma-composer-mic" aria-label="语音输入">
             <img :src="composerMicAsset" alt="" class="itinerary-figma-composer-mic-icon" />
           </button>
@@ -416,6 +604,24 @@ onMounted(() => {
         </footer>
       </div>
     </div>
+
+    <nav class="itinerary-figma-nav" aria-label="底部导航">
+      <button type="button" class="itinerary-figma-nav-btn" aria-label="个人" @click="emit('navigate', 'profile')">
+        <img :src="navProfileAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-profile" />
+      </button>
+      <button type="button" class="itinerary-figma-nav-btn" aria-label="发现" @click="emit('navigate', 'discover')">
+        <img :src="navSearchAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-search" />
+      </button>
+      <button type="button" class="itinerary-figma-nav-btn" aria-label="AI" @click="emit('navigate', 'ai1')">
+        <img :src="navAiAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-ai" />
+      </button>
+      <button type="button" class="itinerary-figma-nav-btn itinerary-figma-nav-btn-active" aria-label="行程" aria-current="page" @click="emit('navigate', 'itinerary')">
+        <img :src="navTripAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-trip" />
+      </button>
+      <button type="button" class="itinerary-figma-nav-btn itinerary-figma-nav-btn-chat" aria-label="聊天" @click="emit('navigate', 'chat')">
+        <img :src="navChatAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-chat" />
+      </button>
+    </nav>
 
     <Transition name="swap-fade">
       <div v-if="activeSwapStop" class="itinerary-swap-backdrop" @click="closeSwapOptions"></div>
@@ -660,6 +866,24 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+.itinerary-figma-address-input {
+  min-width: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+}
+
+.itinerary-figma-address-input::placeholder {
+  color: rgba(44, 40, 40, 0.48);
+}
+
+.itinerary-figma-address-input:focus {
+  outline: none;
+}
+
 .itinerary-figma-address-actions {
   display: flex;
   flex-direction: column;
@@ -697,17 +921,18 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   width: 90px;
   height: 44px;
-  padding: 10px 12px;
+  padding: 10px 8px;
   border: 1px solid rgba(255, 255, 255, 0.95);
   border-radius: 166px;
   background: rgba(0, 0, 0, 0.72);
   color: #fff;
   font-family: 'SF Pro Rounded', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -788,6 +1013,10 @@ onMounted(() => {
 }
 
 .itinerary-figma-route-origin-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 13px;
   line-height: 1;
@@ -1025,9 +1254,10 @@ onMounted(() => {
 
 .itinerary-figma-nav {
   position: absolute;
+  box-sizing: border-box;
   top: 765px;
-  left: 33px;
-  z-index: 10;
+  left: calc(50% - 327px / 2);
+  z-index: 18;
   display: flex;
   align-items: flex-start;
   gap: 18px;
@@ -1056,17 +1286,6 @@ onMounted(() => {
 
 .itinerary-figma-nav-btn-active {
   background: #000;
-}
-
-.itinerary-figma-nav-btn-chat::after {
-  content: '';
-  position: absolute;
-  top: 11px;
-  right: 12px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #4a7db8;
 }
 
 .itinerary-figma-nav-icon {
@@ -1118,7 +1337,9 @@ onMounted(() => {
 }
 
 .itinerary-figma-reminder-card {
-  min-height: 131px;
+  min-height: 158px;
+  display: flex;
+  flex-direction: column;
   padding: 10px 15px 12px;
   border-radius: 9px;
   background: rgba(255, 255, 255, 0.47);
@@ -1144,36 +1365,134 @@ onMounted(() => {
 }
 
 .itinerary-figma-reminder-list li {
-  position: relative;
-  padding-left: 14px;
-  line-height: 32px;
-}
-
-.itinerary-figma-reminder-list li::before {
-  content: '';
-  position: absolute;
-  top: 12px;
-  left: 2px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #5f3153;
-}
-
-.itinerary-figma-packing-list li {
   display: flex;
   align-items: center;
   gap: 8px;
   min-height: 31px;
 }
 
+.itinerary-figma-packing-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 31px;
+}
+
+.itinerary-figma-reminder-row,
+.itinerary-figma-packing-row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.itinerary-figma-reminder-bullet {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #5f3153;
+}
+
 .itinerary-figma-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 11px;
   height: 11px;
   border: 0.8px solid #ababab;
   border-radius: 2px;
   background: transparent;
   flex-shrink: 0;
+}
+
+.itinerary-figma-checkbox-checked {
+  border-color: #5f3153;
+  background: #5f3153;
+}
+
+.itinerary-figma-checkbox-checked::after {
+  content: '';
+  width: 5px;
+  height: 3px;
+  border-left: 1.5px solid #fff;
+  border-bottom: 1.5px solid #fff;
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+.itinerary-figma-reminder-item-done .itinerary-figma-reminder-row span:last-child,
+.itinerary-figma-packing-item-checked .itinerary-figma-packing-row span:last-child {
+  color: #7f7f7f;
+  text-decoration: line-through;
+}
+
+.itinerary-figma-item-remove {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(95, 49, 83, 0.12);
+  color: #5f3153;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.itinerary-figma-inline-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.itinerary-figma-inline-input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(95, 49, 83, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 12px;
+  color: #2c2828;
+}
+
+.itinerary-figma-inline-input::placeholder {
+  color: #9b9499;
+}
+
+.itinerary-figma-inline-input:focus {
+  outline: none;
+  border-color: rgba(95, 49, 83, 0.4);
+}
+
+.itinerary-figma-inline-btn {
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 16px;
+  background: #5f3153;
+  color: #fff;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .itinerary-figma-adjust-section {
@@ -1189,9 +1508,14 @@ onMounted(() => {
   gap: 4px 4px;
 }
 
+.itinerary-figma-adjust-item {
+  position: relative;
+}
+
 .itinerary-figma-adjust-btn {
+  width: 100%;
   height: 35px;
-  padding: 0;
+  padding: 0 28px 0 14px;
   border: 1px solid #c5c5c5;
   border-radius: 52px;
   background: #fff;
@@ -1206,6 +1530,35 @@ onMounted(() => {
   border-color: #461c3a;
   background: #e8e3e7;
   color: #000;
+}
+
+.itinerary-figma-adjust-btn-selected {
+  border-color: #461c3a;
+  box-shadow: inset 0 0 0 1px rgba(70, 28, 58, 0.14);
+}
+
+.itinerary-figma-adjust-remove {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #7b5471;
+  font-size: 13px;
+  line-height: 1;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.itinerary-figma-inline-form-adjust {
+  margin-top: 10px;
 }
 
 .itinerary-figma-composer {
@@ -1231,16 +1584,24 @@ onMounted(() => {
   color: #dbb6de;
 }
 
-.itinerary-figma-composer-text {
+.itinerary-figma-composer-input {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  padding: 0;
+  border: 0;
+  background: transparent;
   font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 15px;
   line-height: 1;
+  color: #6d6d6d;
+}
+
+.itinerary-figma-composer-input::placeholder {
   color: #a8a8a8;
+}
+
+.itinerary-figma-composer-input:focus {
+  outline: none;
 }
 
 .itinerary-figma-composer-mic {

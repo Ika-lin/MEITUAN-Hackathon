@@ -26,7 +26,7 @@ const searchAsset = '/MagnifyingGlass.svg'
 const userAsset = '/user.svg'
 const aiAsset = '/Icon-3.svg'
 const tripAsset = '/lucide_map.svg'
-const chatAsset = '/ChatTeardrop.svg'
+const chatAsset = '/ChatTeardrop-dark.svg'
 const locationAsset = '/Icon-4.svg'
 const cafeStarAsset = '/Item 2_ Cafe/Icon-6.svg'
 
@@ -218,7 +218,6 @@ function isActiveCategory(label: string) {
         @click="emit('navigate', 'chat')"
       >
         <img :src="chatAsset" alt="" class="discover-nav-chat-icon" />
-        <span class="discover-nav-chat-dot" aria-hidden="true"></span>
       </button>
     </nav>
 
@@ -616,15 +615,6 @@ function isActiveCategory(label: string) {
   filter: brightness(0) invert(1);
 }
 
-.discover-nav-chat-dot {
-  position: absolute;
-  top: 11px;
-  right: 10px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #4a7db8;
-}
 
 .discover-home-indicator-wrap {
   position: absolute;

@@ -131,7 +131,7 @@ const ai1VectorAsset = 'https://www.figma.com/api/mcp/asset/491a50d0-2331-4679-9
 const ai1MicGroupAsset = 'https://www.figma.com/api/mcp/asset/a2768da7-ad02-4777-9a79-ecf393d548e3'
 
 // 底部导航图标使用 public 下的本地正式资源
-const ai1MicAsset = '/ChatTeardrop.svg'
+const ai1MicAsset = '/ChatTeardrop-dark.svg'
 const ai1SearchAsset = '/MagnifyingGlass.svg'
 const ai1NavCenterAsset = '/Icon-3.svg'
 const ai1NavLeftAsset = '/user.svg'
