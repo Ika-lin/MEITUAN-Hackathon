@@ -12,9 +12,6 @@ const imgVector3 = 'https://www.figma.com/api/mcp/asset/2a2e3099-9559-444b-a203-
 const imgVector4 = 'https://www.figma.com/api/mcp/asset/511f50c1-23a8-4efc-8b78-62b75fb17682'
 const imgVector5 = 'https://www.figma.com/api/mcp/asset/7b2670e7-9fff-40e2-8ea5-dc5a92cedcf2'
 const imgVector6 = 'https://www.figma.com/api/mcp/asset/c7c5bfa6-ece4-4c58-8d53-6eee9bb8b0aa'
-const imgLine1 = 'https://www.figma.com/api/mcp/asset/ba915d5a-7041-400c-84cb-dd2268236545'
-const imgEllipse1 = 'https://www.figma.com/api/mcp/asset/9b650293-f7a9-4eb9-a0aa-1a166932f90e'
-const imgLine3 = 'https://www.figma.com/api/mcp/asset/c13a58b5-e380-4744-812a-560c97671f4c'
 const imgIconParkOutlineLeft = 'https://www.figma.com/api/mcp/asset/4611f36a-f10f-4f21-b572-7bcc4d5ccd5b'
 const imgLevels = 'https://www.figma.com/api/mcp/asset/1f6d5e15-307d-4f0c-bd28-88e3bb132da2'
 
