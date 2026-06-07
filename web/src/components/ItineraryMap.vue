@@ -1,20 +1,46 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import type { RoutePoint } from '../data/itineraryRoute'
+
+const props = defineProps<{
+  startPoint: RoutePoint
+  endPoint: RoutePoint
+  routePoints: RoutePoint[]
+}>()
+
 const mapBackgroundAsset = '/itinerary-map-bg.png'
-const routeLineAsset = '/itinerary-route-line.svg'
 const startMarkerAsset = '/Start Icon.svg'
 const endMarkerAsset = '/MapPin.svg'
+
+const hasRoute = computed(() => props.routePoints.length > 1)
+
+const routePolylinePoints = computed(() => props.routePoints.map((point) => `${point.x},${point.y}`).join(' '))
+
+const startMarkerStyle = computed(() => ({
+  left: `${props.startPoint.x - 20}px`,
+  top: `${props.startPoint.y - 20}px`,
+}))
+
+const endMarkerStyle = computed(() => ({
+  left: `${props.endPoint.x - 20}px`,
+  top: `${props.endPoint.y - 40}px`,
+}))
 </script>
 
 <template>
   <div class="itinerary-map-wrapper" aria-hidden="true">
     <img :src="mapBackgroundAsset" alt="" class="itinerary-map-background" />
-    <img :src="routeLineAsset" alt="" class="itinerary-map-route" />
 
-    <div class="itinerary-map-start-marker">
+    <svg class="itinerary-map-route-layer" viewBox="0 0 417 551" preserveAspectRatio="none">
+      <polyline v-if="hasRoute" :points="routePolylinePoints" class="itinerary-map-route-shadow" />
+      <polyline v-if="hasRoute" :points="routePolylinePoints" class="itinerary-map-route" />
+    </svg>
+
+    <div class="itinerary-map-start-marker" :style="startMarkerStyle">
       <img :src="startMarkerAsset" alt="" class="itinerary-map-start-icon" />
     </div>
 
-    <img :src="endMarkerAsset" alt="" class="itinerary-map-end-marker" />
+    <img :src="endMarkerAsset" alt="" class="itinerary-map-end-marker" :style="endMarkerStyle" />
   </div>
 </template>
 
@@ -35,19 +61,33 @@ const endMarkerAsset = '/MapPin.svg'
   object-fit: cover;
 }
 
-.itinerary-map-route {
+.itinerary-map-route-layer {
   position: absolute;
-  top: 204px;
-  left: 94px;
-  width: 276px;
-  height: 149px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
+}
+
+.itinerary-map-route-shadow {
+  fill: none;
+  stroke: rgba(95, 49, 83, 0.16);
+  stroke-width: 18px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.itinerary-map-route {
+  fill: none;
+  stroke: #5f3153;
+  stroke-width: 9px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.88;
 }
 
 .itinerary-map-start-marker {
   position: absolute;
-  left: 108px;
-  top: 387px;
   width: 40px;
   height: 40px;
   display: flex;
@@ -67,8 +107,6 @@ const endMarkerAsset = '/MapPin.svg'
 
 .itinerary-map-end-marker {
   position: absolute;
-  left: 352px;
-  top: 214px;
   width: 40px;
   height: 40px;
   display: block;
