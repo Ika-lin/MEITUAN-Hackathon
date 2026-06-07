@@ -172,10 +172,6 @@ function isActiveCategory(label: string) {
       </div>
     </article>
 
-    <button type="button" class="discover-floating-search" aria-label="搜索">
-      <img :src="searchAsset" alt="" />
-    </button>
-
     <nav class="discover-nav" aria-label="底部导航">
       <div class="discover-nav-bg"></div>
 
@@ -541,26 +537,6 @@ function isActiveCategory(label: string) {
   width: 12px;
   height: 12px;
   object-fit: contain;
-}
-
-.discover-floating-search {
-  position: absolute;
-  top: 716px;
-  left: 161px;
-  z-index: 5;
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #000;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
-}
-
-.discover-floating-search img {
-  width: 16px;
-  height: 16px;
-  filter: brightness(0) invert(1);
 }
 
 .discover-nav {

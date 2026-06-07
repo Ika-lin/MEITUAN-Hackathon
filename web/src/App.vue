@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { computed } from 'vue'
 import ItineraryPage from './components/ItineraryPage.vue'
 import DiscoverPage from './components/DiscoverPage.vue'
 import CreatePostPage from './components/CreatePostPage.vue'
@@ -187,13 +186,13 @@ const ai5Budget = ref('')
 const ai5Stay = ref('')
 const ai5TimelineValue = ref(3) // 时间轴默认值，范围 1-6 小时
 
-// 选周末两天时，活动偏好及以下区块整体下移 75px
-// 短时闲逛时，活动偏好区块下移以容纳时间轴选择器
-const ai5Offset = computed(() => {
-  if (ai5TimeType.value === '周末两天') return 75
-  if (ai5TimeType.value === '短时闲逛') return 100
-  return 0
-})
+function selectAi5TimeType(type: string) {
+  ai5TimeType.value = type
+
+  if (type !== '周末两天') {
+    ai5Stay.value = ''
+  }
+}
 
 function toggleAi5Activity(tag: string) {
   const idx = ai5Activities.value.indexOf(tag)
@@ -584,78 +583,79 @@ function takeScreenshot() {
             <!-- 跳过 -->
             <button type="button" class="ai5-skip-btn" @click="activeScreen = 'itinerary'">跳过</button>
 
-            <!-- 游玩时间类型 -->
-            <p class="ai5-label" style="top:159px">游玩时间类型</p>
-            <div class="ai5-row" style="top:196px">
-              <button class="ai5-pill" :class="{active: ai5TimeType==='短时闲逛'}" @click="ai5TimeType='短时闲逛'">短时闲逛</button>
-              <button class="ai5-pill" :class="{active: ai5TimeType==='城市一日'}" @click="ai5TimeType='城市一日'">城市一日</button>
-              <button class="ai5-pill" :class="{active: ai5TimeType==='周末两天'}" @click="ai5TimeType='周末两天'">周末两天</button>
-            </div>
-
-            <!-- 预计可用时间（仅短时闲逛显示） -->
-            <template v-if="ai5TimeType === '短时闲逛'">
-              <div class="ai5-timeline-container">
-                <p class="ai5-timeline-label">预计可用时间</p>
-                <div class="ai5-timeline-track">
-                  <span class="ai5-timeline-min">1小时</span>
-                  <input
-                    v-model.number="ai5TimelineValue"
-                    type="range"
-                    min="1"
-                    max="6"
-                    class="ai5-timeline-slider"
-                  />
-                  <span class="ai5-timeline-max">6小时</span>
+            <div class="ai5-scroll">
+              <section class="ai5-section ai5-section-first">
+                <p class="ai5-label">游玩时间类型</p>
+                <div class="ai5-row ai5-row-pill">
+                  <button class="ai5-pill" :class="{active: ai5TimeType==='短时闲逛'}" @click="selectAi5TimeType('短时闲逛')">短时闲逛</button>
+                  <button class="ai5-pill" :class="{active: ai5TimeType==='城市一日'}" @click="selectAi5TimeType('城市一日')">城市一日</button>
+                  <button class="ai5-pill" :class="{active: ai5TimeType==='周末两天'}" @click="selectAi5TimeType('周末两天')">周末两天</button>
                 </div>
-                <p class="ai5-timeline-current">{{ ai5TimelineValue }}小时</p>
-              </div>
-            </template>
+              </section>
 
-            <!-- 是否在沪留宿（仅周末两天显示） -->
-            <template v-if="ai5TimeType === '周末两天'">
-              <p class="ai5-label" style="top:275px">是否在沪留宿</p>
-              <div class="ai5-row" style="top:310px">
-                <button class="ai5-pill ai5-pill--stay" :class="{active: ai5Stay==='是'}" @click="ai5Stay='是'">是</button>
-                <button class="ai5-pill ai5-pill--stay" :class="{active: ai5Stay==='否'}" @click="ai5Stay='否'">否</button>
-              </div>
-            </template>
+              <section v-if="ai5TimeType === '短时闲逛'" class="ai5-section ai5-section-timeline">
+                <div class="ai5-timeline-container">
+                  <p class="ai5-timeline-label">预计可用时间</p>
+                  <div class="ai5-timeline-track">
+                    <span class="ai5-timeline-min">1小时</span>
+                    <input
+                      v-model.number="ai5TimelineValue"
+                      type="range"
+                      min="1"
+                      max="6"
+                      class="ai5-timeline-slider"
+                    />
+                    <span class="ai5-timeline-max">6小时</span>
+                  </div>
+                  <p class="ai5-timeline-current">{{ ai5TimelineValue }}小时</p>
+                </div>
+              </section>
 
-            <!-- 活动偏好 (多选) -->
-            <p class="ai5-label" :style="{top: (275 + ai5Offset) + 'px'}">活动偏好 (多选)</p>
-            <div class="ai5-row" :style="{top: (316 + ai5Offset) + 'px'}">
-              <button class="ai5-chip" :class="{active: ai5Activities.includes('寻味美食')}" @click="toggleAi5Activity('寻味美食')">寻味美食</button>
-              <button class="ai5-chip" :class="{active: ai5Activities.includes('喝咖啡')}" @click="toggleAi5Activity('喝咖啡')">喝咖啡</button>
-              <button class="ai5-chip" :class="{active: ai5Activities.includes('逛街区')}" @click="toggleAi5Activity('逛街区')">逛街区</button>
-              <button class="ai5-chip" :class="{active: ai5Activities.includes('手作体验')}" @click="toggleAi5Activity('手作体验')">手作体验</button>
+              <section v-if="ai5TimeType === '周末两天'" class="ai5-section">
+                <p class="ai5-label">是否在沪留宿</p>
+                <div class="ai5-row ai5-row-stay">
+                  <button class="ai5-pill ai5-pill--stay" :class="{active: ai5Stay==='是'}" @click="ai5Stay='是'">是</button>
+                  <button class="ai5-pill ai5-pill--stay" :class="{active: ai5Stay==='否'}" @click="ai5Stay='否'">否</button>
+                </div>
+              </section>
+
+              <section class="ai5-section">
+                <p class="ai5-label">活动偏好 (多选)</p>
+                <div class="ai5-chip-grid">
+                  <button class="ai5-chip" :class="{active: ai5Activities.includes('寻味美食')}" @click="toggleAi5Activity('寻味美食')">寻味美食</button>
+                  <button class="ai5-chip" :class="{active: ai5Activities.includes('喝咖啡')}" @click="toggleAi5Activity('喝咖啡')">喝咖啡</button>
+                  <button class="ai5-chip" :class="{active: ai5Activities.includes('逛街区')}" @click="toggleAi5Activity('逛街区')">逛街区</button>
+                  <button class="ai5-chip" :class="{active: ai5Activities.includes('手作体验')}" @click="toggleAi5Activity('手作体验')">手作体验</button>
+                  <button class="ai5-chip" :class="{active: ai5Activities.includes('城市散步')}" @click="toggleAi5Activity('城市散步')">城市散步</button>
+                  <button class="ai5-chip" :class="{active: ai5Activities.includes('拍照打卡')}" @click="toggleAi5Activity('拍照打卡')">拍照打卡</button>
+                  <button class="ai5-chip" :class="{active: ai5Activities.includes('书店阅读')}" @click="toggleAi5Activity('书店阅读')">书店阅读</button>
+                  <button class="ai5-chip" :class="{active: ai5Activities.includes('看展览')}" @click="toggleAi5Activity('看展览')">看展览</button>
+                </div>
+              </section>
+
+              <section class="ai5-section">
+                <p class="ai5-label">出行范围</p>
+                <div class="ai5-row ai5-row-pill">
+                  <button class="ai5-pill" :class="{active: ai5Range==='就近玩玩'}" @click="ai5Range='就近玩玩'">就近玩玩</button>
+                  <button class="ai5-pill" :class="{active: ai5Range==='地铁30分钟'}" @click="ai5Range='地铁30分钟'">地铁30分钟</button>
+                  <button class="ai5-pill" :class="{active: ai5Range==='可以跨区'}" @click="ai5Range='可以跨区'">可以跨区</button>
+                </div>
+              </section>
+
+              <section class="ai5-section">
+                <p class="ai5-label">人均预算</p>
+                <div class="ai5-budget-grid">
+                  <button class="ai5-budget" :class="{active: ai5Budget==='100元内'}" @click="ai5Budget='100元内'">100元内</button>
+                  <button class="ai5-budget" :class="{active: ai5Budget==='100-200元'}" @click="ai5Budget='100-200元'">100-200元</button>
+                  <button class="ai5-budget" :class="{active: ai5Budget==='200-300元'}" @click="ai5Budget='200-300元'">200-300元</button>
+                  <button class="ai5-budget" :class="{active: ai5Budget==='不限'}" @click="ai5Budget='不限'">不限</button>
+                </div>
+              </section>
+
+              <button type="button" class="ai5-cta-btn" @click="activeScreen = 'itinerary'">
+                生成我的闲时计划<span class="ai5-cta-lightning">⚡</span>
+              </button>
             </div>
-            <div class="ai5-row" :style="{top: (370 + ai5Offset) + 'px'}">
-              <button class="ai5-chip" :class="{active: ai5Activities.includes('城市散步')}" @click="toggleAi5Activity('城市散步')">城市散步</button>
-              <button class="ai5-chip" :class="{active: ai5Activities.includes('拍照打卡')}" @click="toggleAi5Activity('拍照打卡')">拍照打卡</button>
-              <button class="ai5-chip" :class="{active: ai5Activities.includes('书店阅读')}" @click="toggleAi5Activity('书店阅读')">书店阅读</button>
-              <button class="ai5-chip" :class="{active: ai5Activities.includes('看展览')}" @click="toggleAi5Activity('看展览')">看展览</button>
-            </div>
-
-            <!-- 出行范围 -->
-            <p class="ai5-label" :style="{top: (444 + ai5Offset) + 'px'}">出行范围</p>
-            <div class="ai5-row" :style="{top: (479 + ai5Offset) + 'px'}">
-              <button class="ai5-pill" :class="{active: ai5Range==='就近玩玩'}" @click="ai5Range='就近玩玩'">就近玩玩</button>
-              <button class="ai5-pill" :class="{active: ai5Range==='地铁30分钟'}" @click="ai5Range='地铁30分钟'">地铁30分钟</button>
-              <button class="ai5-pill" :class="{active: ai5Range==='可以跨区'}" @click="ai5Range='可以跨区'">可以跨区</button>
-            </div>
-
-            <!-- 人均预算 -->
-            <p class="ai5-label" :style="{top: (552 + ai5Offset) + 'px'}">人均预算</p>
-            <div class="ai5-row" :style="{top: (586 + ai5Offset) + 'px'}">
-              <button class="ai5-budget" :class="{active: ai5Budget==='100元内'}" @click="ai5Budget='100元内'">100元内</button>
-              <button class="ai5-budget" :class="{active: ai5Budget==='100-200元'}" @click="ai5Budget='100-200元'">100-200元</button>
-              <button class="ai5-budget" :class="{active: ai5Budget==='200-300元'}" @click="ai5Budget='200-300元'">200-300元</button>
-              <button class="ai5-budget" :class="{active: ai5Budget==='不限'}" @click="ai5Budget='不限'">不限</button>
-            </div>
-
-            <!-- 生成按鈕 -->
-            <button type="button" class="ai5-cta-btn" @click="activeScreen = 'itinerary'">
-              生成我的闲时计划<span class="ai5-cta-lightning">⚡</span>
-            </button>
 
             <!-- Home Indicator -->
             <footer class="home-indicator-wrap">

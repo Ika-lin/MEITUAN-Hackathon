@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import ItineraryMap from './ItineraryMap.vue'
 import { resolvePlaceDetail, type PlaceDetail } from '../data/placeDetails'
 
@@ -9,6 +9,19 @@ const emit = defineEmits<{
 }>()
 
 const levelsAsset = '/Levels.svg'
+const addressStartAsset = '/Location Icon.svg'
+const addressEndAsset = '/map-pin.svg'
+const moreVerticalAsset = '/more-vertical.svg'
+const swapAsset = '/iconamoon_swap.svg'
+const startAsset = '/Start Icon.svg'
+const walkAsset = '/CaretDoubleDown.svg'
+const clockAsset = '/clock.svg'
+const composerMicAsset = '/Group 3.svg'
+const navProfileAsset = '/user.svg'
+const navSearchAsset = '/MagnifyingGlass.svg'
+const navAiAsset = '/Icon-3.svg'
+const navTripAsset = '/lucide_map.svg'
+const navChatAsset = '/ChatTeardrop.svg'
 
 type ItineraryStop = {
   id: number
@@ -29,9 +42,18 @@ type ReplacementOption = {
   walkFromPrevious: string
 }
 
+type StopLayout = {
+  walkTop: number
+  cardTop: number
+  cardHeight: number
+  markerTop: number
+  connectorTop: number
+  connectorHeight: number
+}
+
 const itinerarySummaryStats = [
   { label: '总路程', value: '约1.8km' },
-  { label: '预算估测', value: '¥230-350/人' },
+  { label: '预算估测', value: '¥230–350/人' },
   { label: '交通方式', value: '全程步行' },
   { label: '步行时间', value: '约25分钟' },
 ]
@@ -61,6 +83,12 @@ const initialItineraryStops: ItineraryStop[] = [
     price: '人均 ¥55-70',
     walkFromPrevious: '步行约 8-10 分钟',
   },
+]
+
+const stopLayouts: StopLayout[] = [
+  { walkTop: 711, cardTop: 742, cardHeight: 140, markerTop: 742, connectorTop: 767, connectorHeight: 169 },
+  { walkTop: 905, cardTop: 942, cardHeight: 144, markerTop: 942, connectorTop: 964, connectorHeight: 169 },
+  { walkTop: 1110, cardTop: 1146, cardHeight: 141, markerTop: 1146, connectorTop: 1171, connectorHeight: 169 },
 ]
 
 const itineraryStops = ref(initialItineraryStops.map((stop) => ({ ...stop, tags: [...stop.tags] })))
@@ -129,6 +157,15 @@ const replacementOptionsByStop: Record<number, ReplacementOption[]> = {
 }
 
 const activeSwapStopId = ref<number | null>(null)
+const scrollRoot = ref<HTMLElement | null>(null)
+
+const positionedStops = computed(() =>
+  itineraryStops.value.map((stop, index) => ({
+    ...stop,
+    ...stopLayouts[index],
+    titleWide: stop.id === 3,
+  })),
+)
 
 const activeSwapStop = computed(() => {
   if (activeSwapStopId.value === null) return null
@@ -176,58 +213,72 @@ function openStopDetail(stop: ItineraryStop) {
 
 const itineraryReminders = ['暴晒 25℃', 'RAC BAR 可能等位', '已预留缓冲']
 const itineraryPackingList = ['遮阳伞', '一台傻瓜胶片相机', '充电宝']
-
 const itineraryAdjustments = [
   { label: '更轻松一点', emphasized: false },
   { label: '减少步行', emphasized: false },
   { label: '避开排队', emphasized: false },
   { label: '重新生成', emphasized: true },
 ]
-
 const itineraryPrompt = '今天突然下雨了，不去室外'
+const itineraryFinalWalk = '步行约 8-10 分钟'
+
+onMounted(() => {
+  scrollRoot.value?.scrollTo({ top: 0 })
+})
 </script>
 
 <template>
   <div class="itinerary-figma">
-    <div class="itinerary-figma-background" aria-hidden="true"></div>
-
     <header class="itinerary-figma-status-bar">
       <div class="itinerary-figma-time">9:41</div>
       <div class="itinerary-figma-island"></div>
       <img :src="levelsAsset" alt="" class="itinerary-figma-levels" />
     </header>
 
-    <div class="itinerary-figma-scroll" :class="{ 'itinerary-figma-scroll-locked': activeSwapStop !== null }">
-      <section class="itinerary-figma-address-shell">
-        <div class="itinerary-figma-address-card">
-          <div class="itinerary-figma-address-line itinerary-figma-address-line-muted">
-            <span class="itinerary-figma-address-pin" aria-hidden="true"></span>
-            <span class="itinerary-figma-address-text">上海市徐汇区武康路 376 号附近</span>
-          </div>
-          <div class="itinerary-figma-address-divider"></div>
-          <div class="itinerary-figma-address-line itinerary-figma-address-line-strong">
-            <span class="itinerary-figma-address-pin itinerary-figma-address-pin-end" aria-hidden="true"></span>
-            <span class="itinerary-figma-address-text">上海市徐汇区上海图书馆地铁站</span>
-          </div>
+    <div ref="scrollRoot" class="itinerary-figma-scroll" :class="{ 'itinerary-figma-scroll-locked': activeSwapStop !== null }">
+      <div class="itinerary-figma-canvas">
+        <div class="itinerary-figma-background" aria-hidden="true">
+          <div class="itinerary-figma-glow itinerary-figma-glow-white"></div>
+          <div class="itinerary-figma-glow itinerary-figma-glow-rose"></div>
+          <div class="itinerary-figma-glow itinerary-figma-glow-ellipse"></div>
+          <div class="itinerary-figma-glow itinerary-figma-glow-gold"></div>
         </div>
 
-        <div class="itinerary-figma-address-actions">
-          <button type="button" class="itinerary-figma-address-action" aria-label="更多选项">⋮</button>
-          <button type="button" class="itinerary-figma-address-action" aria-label="交换">⇅</button>
-        </div>
-      </section>
-
-      <section class="itinerary-figma-map-section">
         <div class="itinerary-figma-map-stage">
           <ItineraryMap />
-
-          <button type="button" class="itinerary-figma-start-nav" @click="emit('navigate', 'navigation')">
-            <span class="itinerary-figma-start-nav-icon" aria-hidden="true">▲</span>
-            <span>开始导航</span>
-          </button>
         </div>
 
-        <div class="itinerary-figma-summary-card">
+        <section class="itinerary-figma-address-shell">
+          <div class="itinerary-figma-address-card">
+            <div class="itinerary-figma-address-details">
+              <div class="itinerary-figma-address-line itinerary-figma-address-line-muted">
+                <img :src="addressStartAsset" alt="" class="itinerary-figma-address-icon itinerary-figma-address-icon-muted" />
+                <span class="itinerary-figma-address-text">上海市徐汇区武康路 376 号附近</span>
+              </div>
+              <div class="itinerary-figma-address-divider"></div>
+              <div class="itinerary-figma-address-line itinerary-figma-address-line-strong">
+                <img :src="addressEndAsset" alt="" class="itinerary-figma-address-icon" />
+                <span class="itinerary-figma-address-text">上海市徐汇区上海图书馆地铁站</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="itinerary-figma-address-actions">
+            <button type="button" class="itinerary-figma-address-action" aria-label="更多选项">
+              <img :src="moreVerticalAsset" alt="" class="itinerary-figma-address-action-icon" />
+            </button>
+            <button type="button" class="itinerary-figma-address-action" aria-label="交换起终点">
+              <img :src="swapAsset" alt="" class="itinerary-figma-address-action-icon" />
+            </button>
+          </div>
+        </section>
+
+        <button type="button" class="itinerary-figma-start-nav" @click="emit('navigate', 'navigation')">
+          <img :src="startAsset" alt="" class="itinerary-figma-start-nav-icon" />
+          <span>开始导航</span>
+        </button>
+
+        <section class="itinerary-figma-summary-card">
           <div
             v-for="(item, index) in itinerarySummaryStats"
             :key="item.label"
@@ -237,93 +288,132 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
             <p class="itinerary-figma-summary-label">{{ item.label }}</p>
             <p class="itinerary-figma-summary-value">{{ item.value }}</p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="itinerary-figma-timeline">
-        <div v-for="stop in itineraryStops" :key="stop.id" class="itinerary-figma-step">
-          <div class="itinerary-figma-step-walk">
-            <span class="itinerary-figma-step-walk-icon" aria-hidden="true">⌄⌄</span>
+        <div class="itinerary-figma-route-origin">
+          <img :src="addressStartAsset" alt="" class="itinerary-figma-route-origin-icon" />
+          <span class="itinerary-figma-route-origin-text">上海市徐汇区武康路 376 号附近</span>
+        </div>
+
+        <template v-for="stop in positionedStops" :key="stop.id">
+          <div class="itinerary-figma-step-walk" :style="{ top: `${stop.walkTop}px` }">
+            <img :src="walkAsset" alt="" class="itinerary-figma-step-walk-icon" />
             <span>{{ stop.walkFromPrevious }}</span>
           </div>
 
-          <div class="itinerary-figma-step-row">
-            <div class="itinerary-figma-step-rail" aria-hidden="true">
-              <span class="itinerary-figma-step-marker">{{ stop.id }}</span>
-              <span class="itinerary-figma-step-line"></span>
-            </div>
+          <div class="itinerary-figma-step-connector" :style="{ top: `${stop.connectorTop}px`, height: `${stop.connectorHeight}px` }"></div>
 
-            <article class="itinerary-figma-stop-card">
+          <div class="itinerary-figma-step-marker" :style="{ top: `${stop.markerTop}px` }">{{ stop.id }}</div>
+
+          <article class="itinerary-figma-stop-card" :style="{ top: `${stop.cardTop}px`, height: `${stop.cardHeight}px` }">
+            <div class="itinerary-figma-stop-card-inner">
               <div class="itinerary-figma-stop-header">
-                <p class="itinerary-figma-stop-time">{{ stop.time }}</p>
+                <p class="itinerary-figma-stop-time">
+                  <img :src="clockAsset" alt="" class="itinerary-figma-stop-time-icon" />
+                  <span>{{ stop.time }}</span>
+                </p>
+
                 <div class="itinerary-figma-stop-tools">
                   <button type="button" class="itinerary-figma-stop-tool-pill" aria-label="路线选项">
                     <span class="itinerary-figma-stop-tool-line"></span>
                     <span class="itinerary-figma-stop-tool-line itinerary-figma-stop-tool-line-short"></span>
                   </button>
-                  <button type="button" class="itinerary-figma-stop-tool-dot" aria-label="收藏"></button>
+                  <button type="button" class="itinerary-figma-stop-tool-dot" aria-label="收起站点操作">
+                    <span class="itinerary-figma-stop-tool-minus"></span>
+                  </button>
                 </div>
               </div>
 
-              <h3 class="itinerary-figma-stop-title">{{ stop.title }}</h3>
+              <h3 class="itinerary-figma-stop-title" :class="{ 'itinerary-figma-stop-title-wide': stop.titleWide }">{{ stop.title }}</h3>
 
-              <div class="itinerary-figma-stop-tags">
-                <span v-for="tag in stop.tags" :key="tag" class="itinerary-figma-stop-tag">{{ tag }}</span>
+              <div class="itinerary-figma-stop-meta">
+                <div class="itinerary-figma-stop-tags">
+                  <span v-for="tag in stop.tags" :key="tag" class="itinerary-figma-stop-tag">{{ tag }}</span>
+                </div>
+                <p class="itinerary-figma-stop-price">{{ stop.price }}</p>
               </div>
 
               <div class="itinerary-figma-stop-actions">
                 <button type="button" class="itinerary-figma-detail-btn" @click="openStopDetail(stop)">查看详情</button>
-                <p class="itinerary-figma-stop-price">{{ stop.price }}</p>
                 <button type="button" class="itinerary-figma-swap-btn" @click="openSwapOptions(stop.id)">换一个</button>
               </div>
+            </div>
+          </article>
+        </template>
+
+        <div class="itinerary-figma-step-walk itinerary-figma-step-walk-final" style="top: 1304px;">
+          <img :src="walkAsset" alt="" class="itinerary-figma-step-walk-icon" />
+          <span>{{ itineraryFinalWalk }}</span>
+        </div>
+
+        <nav class="itinerary-figma-nav" aria-label="底部导航">
+          <button type="button" class="itinerary-figma-nav-btn" aria-label="个人" @click="emit('navigate', 'profile')">
+            <img :src="navProfileAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-profile" />
+          </button>
+          <button type="button" class="itinerary-figma-nav-btn" aria-label="发现" @click="emit('navigate', 'discover')">
+            <img :src="navSearchAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-search" />
+          </button>
+          <button type="button" class="itinerary-figma-nav-btn" aria-label="AI" @click="emit('navigate', 'ai1')">
+            <img :src="navAiAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-ai" />
+          </button>
+          <button type="button" class="itinerary-figma-nav-btn itinerary-figma-nav-btn-active" aria-label="行程" aria-current="page" @click="emit('navigate', 'itinerary')">
+            <img :src="navTripAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-trip" />
+          </button>
+          <button type="button" class="itinerary-figma-nav-btn itinerary-figma-nav-btn-chat" aria-label="聊天" @click="emit('navigate', 'chat')">
+            <img :src="navChatAsset" alt="" class="itinerary-figma-nav-icon itinerary-figma-nav-icon-chat" />
+          </button>
+        </nav>
+
+        <section class="itinerary-figma-reminder-section">
+          <h3 class="itinerary-figma-section-title">出发前提醒</h3>
+
+          <div class="itinerary-figma-reminder-grid">
+            <article class="itinerary-figma-reminder-card">
+              <h4 class="itinerary-figma-reminder-title">今日提醒</h4>
+              <ul class="itinerary-figma-reminder-list">
+                <li v-for="item in itineraryReminders" :key="item">{{ item }}</li>
+              </ul>
+            </article>
+
+            <article class="itinerary-figma-reminder-card">
+              <h4 class="itinerary-figma-reminder-title">建议携带</h4>
+              <ul class="itinerary-figma-packing-list">
+                <li v-for="item in itineraryPackingList" :key="item">
+                  <span class="itinerary-figma-checkbox" aria-hidden="true"></span>
+                  <span>{{ item }}</span>
+                </li>
+              </ul>
             </article>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="itinerary-figma-section">
-        <h3 class="itinerary-figma-section-title">出发前提醒</h3>
+        <section class="itinerary-figma-adjust-section">
+          <h3 class="itinerary-figma-section-title">想调整一下？</h3>
 
-        <div class="itinerary-figma-reminder-grid">
-          <article class="itinerary-figma-reminder-card">
-            <h4 class="itinerary-figma-reminder-title">今日提醒</h4>
-            <ul class="itinerary-figma-reminder-list">
-              <li v-for="item in itineraryReminders" :key="item">{{ item }}</li>
-            </ul>
-          </article>
+          <div class="itinerary-figma-adjust-grid">
+            <button
+              v-for="item in itineraryAdjustments"
+              :key="item.label"
+              type="button"
+              class="itinerary-figma-adjust-btn"
+              :class="{ 'itinerary-figma-adjust-btn-emphasis': item.emphasized }"
+            >
+              {{ item.label }}
+            </button>
+          </div>
+        </section>
 
-          <article class="itinerary-figma-reminder-card">
-            <h4 class="itinerary-figma-reminder-title">建议携带</h4>
-            <ul class="itinerary-figma-packing-list">
-              <li v-for="item in itineraryPackingList" :key="item">
-                <span class="itinerary-figma-checkbox" aria-hidden="true"></span>
-                <span>{{ item }}</span>
-              </li>
-            </ul>
-          </article>
-        </div>
-      </section>
-
-      <section class="itinerary-figma-section itinerary-figma-section-tight">
-        <h3 class="itinerary-figma-section-title">想调整一下？</h3>
-
-        <div class="itinerary-figma-adjust-grid">
-          <button
-            v-for="item in itineraryAdjustments"
-            :key="item.label"
-            type="button"
-            class="itinerary-figma-adjust-btn"
-            :class="{ 'itinerary-figma-adjust-btn-emphasis': item.emphasized }"
-          >
-            {{ item.label }}
+        <div class="itinerary-figma-composer">
+          <span class="itinerary-figma-composer-star" aria-hidden="true">✦</span>
+          <span class="itinerary-figma-composer-text">{{ itineraryPrompt }}</span>
+          <button type="button" class="itinerary-figma-composer-mic" aria-label="语音输入">
+            <img :src="composerMicAsset" alt="" class="itinerary-figma-composer-mic-icon" />
           </button>
         </div>
-      </section>
 
-      <div class="itinerary-figma-composer">
-        <span class="itinerary-figma-composer-star" aria-hidden="true">✦</span>
-        <span class="itinerary-figma-composer-text">{{ itineraryPrompt }}</span>
-        <button type="button" class="itinerary-figma-composer-mic" aria-label="语音输入">●</button>
+        <footer class="itinerary-figma-home-indicator">
+          <div class="itinerary-figma-home-indicator-bar"></div>
+        </footer>
       </div>
     </div>
 
@@ -367,65 +457,6 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
         </div>
       </section>
     </Transition>
-
-    <nav class="itinerary-figma-nav" aria-label="底部导航">
-      <div class="itinerary-figma-nav-bg"></div>
-
-      <button
-        type="button"
-        class="itinerary-figma-nav-btn itinerary-figma-nav-btn-muted"
-        style="left:41px;top:768px;"
-        aria-label="个人"
-        @click="emit('navigate', 'profile')"
-      >
-        <img src="/user.svg" alt="" class="itinerary-figma-nav-user-icon" />
-      </button>
-
-      <button
-        type="button"
-        class="itinerary-figma-nav-btn itinerary-figma-nav-btn-muted"
-        style="left:113px;top:768px;"
-        aria-label="发现"
-        @click="emit('navigate', 'discover')"
-      >
-        <img src="/MagnifyingGlass.svg" alt="" class="itinerary-figma-nav-search-icon" />
-      </button>
-
-      <button
-        type="button"
-        class="itinerary-figma-nav-btn itinerary-figma-nav-btn-muted"
-        style="left:177px;top:768px;"
-        aria-label="AI"
-        @click="emit('navigate', 'ai1')"
-      >
-        <img src="/Icon-3.svg" alt="" class="itinerary-figma-nav-ai-icon" />
-      </button>
-
-      <button
-        type="button"
-        class="itinerary-figma-nav-btn itinerary-figma-nav-btn-active"
-        style="left:240px;top:768px;"
-        aria-label="行程"
-        aria-current="page"
-        @click="emit('navigate', 'itinerary')"
-      >
-        <img src="/lucide_map.svg" alt="" class="itinerary-figma-nav-trip-icon" />
-      </button>
-
-      <button
-        type="button"
-        class="itinerary-figma-nav-btn itinerary-figma-nav-btn-muted"
-        style="left:305px;top:768px;"
-        aria-label="聊天"
-        @click="emit('navigate', 'chat')"
-      >
-        <img src="/ChatTeardrop.svg" alt="" class="itinerary-figma-nav-chat-icon" />
-      </button>
-    </nav>
-
-    <footer class="itinerary-figma-home-indicator">
-      <div class="itinerary-figma-home-indicator-bar"></div>
-    </footer>
   </div>
 </template>
 
@@ -437,27 +468,92 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   background: #f9f9f9;
 }
 
+.itinerary-figma-scroll {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.itinerary-figma-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.itinerary-figma-scroll-locked {
+  overflow: hidden;
+}
+
+.itinerary-figma-canvas {
+  position: relative;
+  width: 393px;
+  min-height: 2031px;
+  background: #f4eff3;
+  overflow: hidden;
+}
+
 .itinerary-figma-background {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(46% 18% at 18% 72%, rgba(241, 196, 218, 0.78) 0%, rgba(241, 196, 218, 0) 72%),
-    radial-gradient(44% 23% at 82% 92%, rgba(255, 249, 142, 0.8) 0%, rgba(255, 249, 142, 0) 69%),
-    radial-gradient(52% 19% at 55% 100%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0) 78%),
-    #f4eff3;
+  background: #f4eff3;
+}
+
+.itinerary-figma-glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(100px);
+  pointer-events: none;
+}
+
+.itinerary-figma-glow-white {
+  top: 1360px;
+  left: 44px;
+  width: 220px;
+  height: 360px;
+  background: rgba(255, 255, 255, 0.9);
+  transform: rotate(-67deg) skewX(-45deg) scaleY(0.7);
+}
+
+.itinerary-figma-glow-rose {
+  top: 744px;
+  left: -98px;
+  width: 160px;
+  height: 520px;
+  background: rgba(215, 164, 224, 0.45);
+  transform: rotate(-67deg) skewX(-45deg) scaleY(0.7);
+}
+
+.itinerary-figma-glow-ellipse {
+  top: 812px;
+  left: -132px;
+  width: 340px;
+  height: 860px;
+  background: rgba(255, 255, 255, 0.36);
+  transform: rotate(74deg) skewX(44deg) scaleY(0.72);
+}
+
+.itinerary-figma-glow-gold {
+  top: 1710px;
+  right: -34px;
+  width: 210px;
+  height: 360px;
+  background: rgba(255, 249, 142, 0.82);
+  transform: rotate(114deg) skewX(-45deg) scaleY(0.7);
 }
 
 .itinerary-figma-status-bar {
   position: absolute;
-  top: 0;
+  top: -4px;
   left: 0;
-  z-index: 10;
+  z-index: 20;
   width: 100%;
   height: 54px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .itinerary-figma-time {
@@ -484,90 +580,81 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   object-fit: contain;
 }
 
-.itinerary-figma-scroll {
-  position: relative;
-  z-index: 2;
-  height: 100%;
-  overflow-y: auto;
-  padding: 60px 16px 132px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.itinerary-figma-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.itinerary-figma-scroll-locked {
+.itinerary-figma-map-stage {
+  position: absolute;
+  top: 55px;
+  left: 50%;
+  width: 417px;
+  height: 551px;
   overflow: hidden;
+  background: #ece4e5;
+  transform: translateX(-50%);
 }
 
 .itinerary-figma-address-shell {
+  position: absolute;
+  top: 60px;
+  left: 16px;
+  z-index: 8;
   display: flex;
   gap: 8px;
-  align-items: stretch;
+  width: 361px;
 }
 
 .itinerary-figma-address-card {
-  flex: 1;
-  min-width: 0;
+  width: 297px;
+  height: 92px;
   padding: 16px;
-  border-radius: 24px;
   border: 1px solid #f3f3f3;
-  background: rgba(255, 255, 255, 0.95);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+}
+
+.itinerary-figma-address-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
 }
 
 .itinerary-figma-address-line {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 8px;
+  width: 100%;
+  font-family: 'SF Pro Rounded', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 14px;
   line-height: 1.7;
   color: #2c2828;
 }
 
 .itinerary-figma-address-line-muted {
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 .itinerary-figma-address-line-strong {
   font-weight: 500;
 }
 
-.itinerary-figma-address-pin {
-  position: relative;
+.itinerary-figma-address-icon {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  border: 1.4px solid #000;
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);
-  background: transparent;
 }
 
-.itinerary-figma-address-pin::after {
-  content: '';
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  top: 4px;
-  left: 4px;
-  border-radius: 50%;
-  background: #000;
-}
-
-.itinerary-figma-address-pin-end {
-  opacity: 1;
+.itinerary-figma-address-icon-muted {
+  opacity: 0.8;
 }
 
 .itinerary-figma-address-divider {
+  width: 100%;
   height: 1px;
-  margin: 8px 0;
   background: #e8e3e7;
 }
 
 .itinerary-figma-address-text {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -576,65 +663,73 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
 .itinerary-figma-address-actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  width: 56px;
+  padding: 2px 8px;
+  border: 1px solid #f3f3f3;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
 }
 
 .itinerary-figma-address-action {
   width: 40px;
   height: 40px;
-  border: 1px solid #f3f3f3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
-  color: #2a2a2a;
-  font-size: 16px;
+  background: #fff;
   cursor: pointer;
 }
 
-.itinerary-figma-map-section {
-  margin-top: 10px;
-}
-
-.itinerary-figma-map-stage {
-  position: relative;
-  height: 312px;
-  overflow: hidden;
-  border-radius: 32px;
-  background: #ece4e5;
-  box-shadow: 0 10px 30px rgba(112, 86, 102, 0.12);
+.itinerary-figma-address-action-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .itinerary-figma-start-nav {
   position: absolute;
-  right: 10px;
-  bottom: 12px;
-  z-index: 4;
+  top: 523px;
+  left: 278px;
+  z-index: 7;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  height: 40px;
-  padding: 0 14px;
-  border: 1px solid rgba(255, 255, 255, 0.92);
-  border-radius: 999px;
+  width: 90px;
+  height: 44px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 166px;
   background: rgba(0, 0, 0, 0.72);
   color: #fff;
+  font-family: 'SF Pro Rounded', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 14px;
+  line-height: 1.7;
   cursor: pointer;
 }
 
 .itinerary-figma-start-nav-icon {
-  font-size: 11px;
+  width: 14px;
+  height: 14px;
 }
 
 .itinerary-figma-summary-card {
+  position: absolute;
+  top: 586px;
+  left: 18px;
+  z-index: 8;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: -18px 2px 0;
-  padding: 12px 8px;
+  width: 358px;
+  height: 61px;
+  padding: 11px 13px 12px 21px;
   border: 1px solid #f3f3f3;
   border-radius: 24px 24px 18px 18px;
   background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.36);
 }
 
 .itinerary-figma-summary-item {
@@ -648,99 +743,120 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   top: 6px;
   right: 0;
   width: 1px;
-  height: 34px;
+  height: 38px;
   background: #e8e3e7;
 }
 
 .itinerary-figma-summary-label,
 .itinerary-figma-summary-value {
   margin: 0;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: #000;
 }
 
 .itinerary-figma-summary-label {
   font-size: 14px;
-  color: #000;
+  line-height: 1.15;
 }
 
 .itinerary-figma-summary-value {
-  margin-top: 5px;
+  margin-top: 8px;
   font-size: 10px;
+  line-height: 1.2;
+}
+
+.itinerary-figma-route-origin {
+  position: absolute;
+  top: 666px;
+  left: 7px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 380px;
+  height: 30px;
+  border: 0.5px solid #000;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.itinerary-figma-route-origin-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.itinerary-figma-route-origin-text {
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 13px;
+  line-height: 1;
   color: #000;
 }
 
-.itinerary-figma-timeline {
-  margin-top: 14px;
-}
-
-.itinerary-figma-step + .itinerary-figma-step {
-  margin-top: 4px;
-}
-
 .itinerary-figma-step-walk {
+  position: absolute;
+  left: 30px;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 0 0 8px 12px;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 12px;
-  line-height: 1.45;
-  color: #1f1b1b;
+  line-height: 17.5px;
+  color: #000;
+}
+
+.itinerary-figma-step-walk-final {
+  left: 28px;
 }
 
 .itinerary-figma-step-walk-icon {
-  color: #6b5866;
-  font-size: 11px;
-}
-
-.itinerary-figma-step-row {
-  display: flex;
-  align-items: stretch;
-}
-
-.itinerary-figma-step-rail {
-  position: relative;
-  width: 22px;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
+}
+
+.itinerary-figma-step-connector {
+  position: absolute;
+  left: 16px;
+  z-index: 1;
+  width: 1.5px;
+  background: linear-gradient(180deg, #9e6c90 0%, #d7bccf 100%);
 }
 
 .itinerary-figma-step-marker {
   position: absolute;
-  top: 10px;
-  left: 0;
-  z-index: 1;
+  left: 5px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 2px solid #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
   background: #5f3153;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.24);
   color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  display: grid;
-  place-items: center;
-}
-
-.itinerary-figma-step-line {
-  position: absolute;
-  top: 34px;
-  bottom: -18px;
-  left: 10px;
-  width: 1.5px;
-  background: linear-gradient(180deg, #d5c7d0 0%, #d5c7d0 78%, rgba(213, 199, 208, 0) 100%);
-}
-
-.itinerary-figma-step:last-child .itinerary-figma-step-line {
-  display: none;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 15px;
+  line-height: 1;
+  box-shadow: 0 0 0 3px rgba(230, 217, 227, 0.6) inset;
 }
 
 .itinerary-figma-stop-card {
-  flex: 1;
-  margin-left: 10px;
-  padding: 12px 11px 11px;
-  border: 0.65px solid #b4b4b4;
-  border-radius: 13px;
+  position: absolute;
+  left: 29px;
+  z-index: 4;
+  width: 355px;
+  border: 0.646px solid #b4b4b4;
+  border-radius: 12.929px;
   background: rgba(244, 239, 241, 0.96);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.itinerary-figma-stop-card-inner {
+  position: relative;
+  height: 100%;
+  padding: 14px 11px 11px;
 }
 
 .itinerary-figma-stop-header {
@@ -751,37 +867,47 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
 }
 
 .itinerary-figma-stop-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   margin: 0;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 10px;
-  line-height: 1.4;
+  line-height: 1.2;
   color: #000;
+}
+
+.itinerary-figma-stop-time-icon {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
 }
 
 .itinerary-figma-stop-tools {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 11px;
 }
 
 .itinerary-figma-stop-tool-pill {
-  width: 57px;
+  width: 56.833px;
   height: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  border: 0.92px solid #e8e3e7;
-  border-radius: 8px;
+  padding: 0;
+  border: 0.917px solid #e8e3e7;
+  border-radius: 8.041px;
   background: #fff;
   cursor: pointer;
 }
 
 .itinerary-figma-stop-tool-line {
-  display: block;
   width: 14px;
   height: 1.6px;
   border-radius: 999px;
-  background: #6b5564;
+  background: #6a5765;
 }
 
 .itinerary-figma-stop-tool-line-short {
@@ -791,53 +917,97 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
 .itinerary-figma-stop-tool-dot {
   width: 22px;
   height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   border: 0;
   border-radius: 50%;
   background: #5f3153;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
   cursor: pointer;
 }
 
+.itinerary-figma-stop-tool-minus {
+  width: 9px;
+  height: 1.6px;
+  border-radius: 999px;
+  background: #fff;
+}
+
 .itinerary-figma-stop-title {
-  margin: 10px 0 8px;
+  margin: 12px 0 0;
+  max-width: 252px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 16px;
-  line-height: 1.35;
-  font-weight: 400;
+  line-height: 1.2;
   color: #000;
+}
+
+.itinerary-figma-stop-title-wide {
+  max-width: 268px;
+}
+
+.itinerary-figma-stop-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 11px;
 }
 
 .itinerary-figma-stop-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  max-width: 228px;
 }
 
 .itinerary-figma-stop-tag {
   min-width: 51px;
-  padding: 0 10px;
   height: 19px;
+  padding: 0 10px;
   border: 0.5px solid #b8b8b8;
-  border-radius: 28px;
+  border-radius: 28.348px;
   background: #fff;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 10px;
   line-height: 18px;
   color: #000;
   text-align: center;
 }
 
+.itinerary-figma-stop-price {
+  flex-shrink: 0;
+  margin: 0;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 12.57px;
+  line-height: 1.2;
+  color: #000;
+  white-space: nowrap;
+}
+
 .itinerary-figma-stop-actions {
-  display: grid;
-  grid-template-columns: 81px 1fr 81px;
+  position: absolute;
+  left: 11px;
+  right: 11px;
+  bottom: 11px;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 14px;
+  justify-content: space-between;
 }
 
 .itinerary-figma-detail-btn,
 .itinerary-figma-swap-btn {
+  width: 81px;
   height: 27px;
-  border-radius: 5px;
-  font-size: 13px;
+  padding: 0;
+  border-radius: 4.654px;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 12.96px;
+  line-height: 1;
   cursor: pointer;
 }
 
@@ -853,32 +1023,97 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   color: #000;
 }
 
-.itinerary-figma-stop-price {
-  margin: 0;
-  justify-self: end;
-  font-size: 12.57px;
-  color: #000;
-  white-space: nowrap;
+.itinerary-figma-nav {
+  position: absolute;
+  top: 765px;
+  left: 33px;
+  z-index: 10;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  width: 327px;
+  height: 54px;
+  padding: 3px 7px 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.66);
+  backdrop-filter: blur(18px);
 }
 
-.itinerary-figma-section {
-  margin-top: 16px;
+.itinerary-figma-nav-btn {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border: 0;
+  border-radius: 1000px;
+  background: rgba(0, 0, 0, 0.02);
+  cursor: pointer;
 }
 
-.itinerary-figma-section-tight {
-  margin-top: 14px;
+.itinerary-figma-nav-btn-active {
+  background: #000;
+}
+
+.itinerary-figma-nav-btn-chat::after {
+  content: '';
+  position: absolute;
+  top: 11px;
+  right: 12px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4a7db8;
+}
+
+.itinerary-figma-nav-icon {
+  display: block;
+  object-fit: contain;
+}
+
+.itinerary-figma-nav-icon-profile {
+  width: 14.4px;
+  height: 14.4px;
+}
+
+.itinerary-figma-nav-icon-search,
+.itinerary-figma-nav-icon-chat {
+  width: 16px;
+  height: 16px;
+}
+
+.itinerary-figma-nav-icon-ai {
+  width: 22px;
+  height: 22px;
+}
+
+.itinerary-figma-nav-icon-trip {
+  width: 12px;
+  height: 11.83px;
+  filter: brightness(0) invert(1);
+}
+
+.itinerary-figma-reminder-section {
+  position: absolute;
+  top: 1442px;
+  left: 19px;
+  width: 354px;
 }
 
 .itinerary-figma-section-title {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 17px;
-  font-weight: 400;
+  line-height: 20px;
   color: #000;
 }
 
 .itinerary-figma-reminder-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 170px 170px;
   gap: 14px;
 }
 
@@ -891,8 +1126,9 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
 
 .itinerary-figma-reminder-title {
   margin: 0 0 10px;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 14px;
-  font-weight: 400;
+  line-height: 1.15;
   color: #000;
 }
 
@@ -901,20 +1137,22 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   list-style: none;
   margin: 0;
   padding: 0;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 12px;
+  line-height: 17px;
   color: #000;
 }
 
 .itinerary-figma-reminder-list li {
   position: relative;
   padding-left: 14px;
-  line-height: 2.3;
+  line-height: 32px;
 }
 
 .itinerary-figma-reminder-list li::before {
   content: '';
   position: absolute;
-  top: 10px;
+  top: 12px;
   left: 2px;
   width: 7px;
   height: 7px;
@@ -926,7 +1164,7 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   display: flex;
   align-items: center;
   gap: 8px;
-  line-height: 2.5;
+  min-height: 31px;
 }
 
 .itinerary-figma-checkbox {
@@ -938,19 +1176,29 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   flex-shrink: 0;
 }
 
+.itinerary-figma-adjust-section {
+  position: absolute;
+  top: 1624px;
+  left: 19px;
+  width: 354px;
+}
+
 .itinerary-figma-adjust-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 4px;
+  grid-template-columns: repeat(2, 175px);
+  gap: 4px 4px;
 }
 
 .itinerary-figma-adjust-btn {
   height: 35px;
+  padding: 0;
   border: 1px solid #c5c5c5;
   border-radius: 52px;
   background: #fff;
   color: #404040;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 14px;
+  line-height: 16px;
   cursor: pointer;
 }
 
@@ -961,21 +1209,26 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
 }
 
 .itinerary-figma-composer {
+  position: absolute;
+  top: 1751px;
+  left: 19px;
+  z-index: 4;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  width: 357px;
   height: 47px;
-  margin-top: 18px;
   padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.88);
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(10px);
 }
 
 .itinerary-figma-composer-star {
   font-size: 18px;
-  color: #d59fc0;
+  line-height: 1;
+  color: #dbb6de;
 }
 
 .itinerary-figma-composer-text {
@@ -984,25 +1237,50 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: 'FZLanTingHeiS-DB-GB', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 15px;
+  line-height: 1;
   color: #a8a8a8;
 }
 
 .itinerary-figma-composer-mic {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   border: 0;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.02);
-  color: #463341;
-  font-size: 12px;
+  background: transparent;
   cursor: pointer;
+}
+
+.itinerary-figma-composer-mic-icon {
+  width: 16px;
+  height: 22px;
+  display: block;
+}
+
+.itinerary-figma-home-indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.itinerary-figma-home-indicator-bar {
+  width: 144px;
+  height: 5px;
+  border-radius: 100px;
+  background: #2a2a2a;
 }
 
 .itinerary-swap-backdrop {
   position: absolute;
   inset: 0;
-  z-index: 18;
+  z-index: 28;
   background: rgba(24, 18, 23, 0.12);
   backdrop-filter: blur(4px);
 }
@@ -1012,7 +1290,7 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 19;
+  z-index: 29;
   padding: 8px 11px 16px;
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
@@ -1073,8 +1351,7 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
 
 .itinerary-swap-sheet-grid {
   display: grid;
-  grid-template-columns: repeat(2, 163px);
-  justify-content: center;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1082,13 +1359,13 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   position: relative;
   display: flex;
   flex-direction: column;
-  width: 163px;
+  min-width: 0;
   height: 131px;
   padding: 10px 11px 0;
   border: 0;
   border-radius: 16px;
   background: #fff;
-  overflow: visible;
+  overflow: hidden;
   box-shadow: 0 0 0 1px rgba(25, 16, 24, 0.08);
   will-change: transform, opacity;
 }
@@ -1099,7 +1376,6 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   justify-content: space-between;
   gap: 6px;
   min-height: 29px;
-  padding: 0;
 }
 
 .itinerary-swap-option-title {
@@ -1124,13 +1400,11 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
   border-radius: 7px;
   background: rgba(214, 197, 249, 0.5);
   color: #51373f;
   font-size: 10px;
   line-height: 13px;
-  font-weight: 400;
 }
 
 .itinerary-swap-option-travel {
@@ -1138,10 +1412,8 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   align-items: center;
   gap: 4px;
   margin: 8px 0 0;
-  padding: 0;
   font-size: 10px;
   line-height: 13px;
-  font-weight: 400;
   color: #000;
 }
 
@@ -1162,22 +1434,20 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
   color: #000;
   font-size: 9px;
   line-height: 13px;
-  font-weight: 400;
   overflow: hidden;
 }
 
 .itinerary-swap-option-action {
   margin-top: auto;
-  width: 183px;
+  width: calc(100% + 22px);
   height: 28px;
-  margin-left: -10px;
+  margin-left: -11px;
   border: 0;
   background: #4a1e43;
   color: #fff;
-  border-radius: 32px;
+  border-radius: 0 0 16px 16px;
   font-size: 10px;
   line-height: 13px;
-  font-weight: 400;
   cursor: pointer;
 }
 
@@ -1219,101 +1489,5 @@ const itineraryPrompt = '今天突然下雨了，不去室外'
 .swap-sheet-enter-active .itinerary-swap-option-card:nth-child(2),
 .swap-sheet-leave-active .itinerary-swap-option-card:nth-child(2) {
   transition-delay: 50ms;
-}
-
-.itinerary-figma-nav {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 10;
-  pointer-events: none;
-}
-
-.itinerary-figma-nav-bg {
-  position: absolute;
-  width: 327px;
-  height: 54px;
-  left: 33px;
-  top: 765px;
-  box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.66);
-  border: 1px solid #ffffff;
-  border-radius: 32px;
-}
-
-.itinerary-figma-nav-btn {
-  position: absolute;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 12px;
-  gap: 8px;
-  border: 0;
-  border-radius: 1000px;
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-.itinerary-figma-nav-btn-muted {
-  background: rgba(0, 0, 0, 0.02);
-}
-
-.itinerary-figma-nav-btn-active {
-  background: #000000;
-}
-
-.itinerary-figma-nav-user-icon {
-  width: 14.4px;
-  height: 14.4px;
-  display: block;
-  filter: brightness(0);
-}
-
-.itinerary-figma-nav-search-icon,
-.itinerary-figma-nav-chat-icon {
-  width: 16px;
-  height: 16px;
-  display: block;
-}
-
-.itinerary-figma-nav-ai-icon {
-  width: 22px;
-  height: 22px;
-  display: block;
-  filter: brightness(0);
-}
-
-.itinerary-figma-nav-trip-icon {
-  width: 12px;
-  height: 11.83px;
-  display: block;
-  filter: brightness(0) invert(1);
-}
-
-.itinerary-figma-nav-btn:focus-visible {
-  outline: 2px solid rgba(70, 28, 58, 0.45);
-  outline-offset: 2px;
-}
-
-.itinerary-figma-home-indicator {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 8px;
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-}
-
-.itinerary-figma-home-indicator-bar {
-  width: 144px;
-  height: 5px;
-  border-radius: 100px;
-  background: #2a2a2a;
 }
 </style>
