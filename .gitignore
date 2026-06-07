@@ -1,0 +1,14 @@
+node_modules/
+dist/
+dist-check/
+*.db
+*.db-journal
+*.db-wal
+.env
+__pycache__/
+*.pyc
+.DS_Store
+.venv/
+*.egg-info/
+build.err
+build.out
