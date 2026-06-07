@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import ItineraryMap from './ItineraryMap.vue'
-import { itineraryKilometersPerPixel, itineraryWalkMinutesPerKilometer, routePointMap, type RoutePoint } from '../data/itineraryRoute'
+import { itineraryKilometersPerPixel, itinerarySegmentAccessKilometers, itineraryWalkMinutesPerKilometer, routePointMap, type RoutePoint } from '../data/itineraryRoute'
 import { resolvePlaceDetail, type PlaceDetail } from '../data/placeDetails'
 
 const emit = defineEmits<{
@@ -407,7 +407,7 @@ function formatTravelLabel(averageMinutes: number) {
 
 function calculateTravelSegment(fromPoint: MapPoint, toPoint: MapPoint): TravelSegment {
   const distancePx = Math.hypot(toPoint.x - fromPoint.x, toPoint.y - fromPoint.y)
-  const distanceKm = Number((distancePx * itineraryKilometersPerPixel).toFixed(2))
+  const distanceKm = Number((distancePx * itineraryKilometersPerPixel + itinerarySegmentAccessKilometers).toFixed(2))
   const averageMinutes = distanceKm * itineraryWalkMinutesPerKilometer
 
   return {

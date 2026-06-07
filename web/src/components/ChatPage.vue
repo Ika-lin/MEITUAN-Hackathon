@@ -27,7 +27,7 @@ const levelsAsset = '/Levels.svg'
 const searchAsset = '/uil_search.svg'
 const caretAsset = '/CaretRight.svg'
 const userAsset = '/user.svg'
-const aiAsset = '/Icon.svg'
+const aiAsset = '/Icon-3.svg'
 const tripAsset = '/lucide_map.svg'
 const chatAsset = '/ChatTeardrop-light.svg'
 const groupChatCoverAsset = '/group-chat-cover.png'
@@ -192,11 +192,9 @@ function openConversation(conversation: Conversation) {
     </section>
 
     <nav class="chat-nav" aria-label="底部导航">
-      <div class="chat-nav-bg"></div>
-
       <button
         type="button"
-        class="chat-nav-btn chat-nav-btn-muted chat-nav-btn-user"
+        class="chat-nav-btn chat-nav-btn-muted"
         aria-label="个人"
         @click="emit('navigate', 'profile')"
       >
@@ -205,7 +203,7 @@ function openConversation(conversation: Conversation) {
 
       <button
         type="button"
-        class="chat-nav-btn chat-nav-btn-muted chat-nav-btn-search"
+        class="chat-nav-btn chat-nav-btn-muted"
         aria-label="发现"
         @click="emit('navigate', 'discover')"
       >
@@ -214,7 +212,7 @@ function openConversation(conversation: Conversation) {
 
       <button
         type="button"
-        class="chat-nav-btn chat-nav-btn-muted chat-nav-btn-ai"
+        class="chat-nav-btn chat-nav-btn-muted"
         aria-label="AI"
         @click="emit('navigate', 'ai1')"
       >
@@ -223,7 +221,7 @@ function openConversation(conversation: Conversation) {
 
       <button
         type="button"
-        class="chat-nav-btn chat-nav-btn-muted chat-nav-btn-trip"
+        class="chat-nav-btn chat-nav-btn-muted"
         aria-label="行程"
         @click="emit('navigate', 'itinerary')"
       >
@@ -232,11 +230,14 @@ function openConversation(conversation: Conversation) {
 
       <button
         type="button"
-        class="chat-nav-btn chat-nav-btn-active chat-nav-btn-chat"
+        class="chat-nav-btn chat-nav-btn-active"
         aria-label="聊天"
         aria-current="page"
       >
-        <img :src="chatAsset" alt="" class="chat-nav-chat-icon" />
+        <span class="chat-nav-chat-wrap" aria-hidden="true">
+          <img :src="chatAsset" alt="" class="chat-nav-chat-icon" />
+          <span class="chat-nav-chat-dot"></span>
+        </span>
       </button>
     </nav>
 
@@ -561,33 +562,31 @@ function openConversation(conversation: Conversation) {
 
 .chat-nav {
   position: absolute;
-  inset: 0;
-  z-index: 4;
-  pointer-events: none;
-}
-
-.chat-nav-bg {
-  position: absolute;
-  top: 765px;
-  left: 33px;
+  box-sizing: border-box;
+  top: 756px;
+  left: calc(50% - 327px / 2);
+  z-index: 18;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
   width: 327px;
   height: 54px;
-  border: 1px solid #fff;
+  padding: 3px 7px 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.92);
   border-radius: 32px;
   background: rgba(255, 255, 255, 0.66);
-  backdrop-filter: blur(20px);
-  pointer-events: none;
+  backdrop-filter: blur(18px);
 }
 
 .chat-nav-btn {
-  position: absolute;
-  top: 768px;
-  display: grid;
-  place-items: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 48px;
   height: 48px;
-  border-radius: 50%;
-  pointer-events: auto;
+  padding: 12px;
+  border-radius: 1000px;
 }
 
 .chat-nav-btn-muted {
@@ -598,27 +597,8 @@ function openConversation(conversation: Conversation) {
   background: #000;
 }
 
-.chat-nav-btn-user {
-  left: 41px;
-}
-
-.chat-nav-btn-search {
-  left: 113px;
-}
-
-.chat-nav-btn-ai {
-  left: 177px;
-}
-
-.chat-nav-btn-trip {
-  left: 240px;
-}
-
-.chat-nav-btn-chat {
-  left: 305px;
-}
-
 .chat-nav-user-icon {
+  display: block;
   width: 14.4px;
   height: 14.4px;
   filter: brightness(0);
@@ -626,14 +606,41 @@ function openConversation(conversation: Conversation) {
 
 .chat-nav-search-icon,
 .chat-nav-chat-icon {
-  width: 13px;
-  height: 13px;
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.chat-nav-chat-wrap {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 16px;
 }
 
 .chat-nav-ai-icon,
 .chat-nav-trip-icon {
-  width: 18px;
-  height: 18px;
+  display: block;
+}
+
+.chat-nav-ai-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.chat-nav-trip-icon {
+  width: 12px;
+  height: 11.83px;
+}
+
+.chat-nav-chat-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4a7db8;
 }
 
 

@@ -33,6 +33,9 @@ export const routePointMap: Record<RouteNodeId, RoutePoint> = {
 }
 
 const baselineRoute: RoutePointId[] = ['filmBookstore', 'racBar', 'springNoodle']
+const itineraryBaselineKilometers = 1.8
+const itineraryBaselineWalkMinutes = 25
+const baselineSegmentCount = baselineRoute.length + 1
 
 function getPoint(id: RouteNodeId) {
   return routePointMap[id]
@@ -55,8 +58,10 @@ function getRoutePixelDistance(routePointIds: RoutePointId[]) {
   return totalPixels
 }
 
-export const itineraryKilometersPerPixel = 1.8 / getRoutePixelDistance(baselineRoute)
-export const itineraryWalkMinutesPerKilometer = 25 / 1.8
+export const itinerarySegmentAccessKilometers = 0.08
+export const itineraryKilometersPerPixel =
+  (itineraryBaselineKilometers - baselineSegmentCount * itinerarySegmentAccessKilometers) / getRoutePixelDistance(baselineRoute)
+export const itineraryWalkMinutesPerKilometer = itineraryBaselineWalkMinutes / itineraryBaselineKilometers
 
 export function getRouteNodeIds(routePointIds: RoutePointId[]) {
   return ['start', ...routePointIds, 'end'] as RouteNodeId[]
@@ -64,7 +69,7 @@ export function getRouteNodeIds(routePointIds: RoutePointId[]) {
 
 export function getRouteSegment(from: RouteNodeId, to: RouteNodeId) {
   const pixelDistance = getPixelDistance(from, to)
-  const distanceKm = pixelDistance * itineraryKilometersPerPixel
+  const distanceKm = pixelDistance * itineraryKilometersPerPixel + itinerarySegmentAccessKilometers
   const walkMinutes = distanceKm * itineraryWalkMinutesPerKilometer
 
   return {
