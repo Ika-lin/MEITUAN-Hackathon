@@ -1698,6 +1698,28 @@ body {
   flex-shrink: 0;
 }
 
+.ai1-direct-generate {
+  position: absolute;
+  left: 19px;
+  top: 596px;
+  width: 357px;
+  height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #1f1f1f 0%, #3a3a3a 100%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 4;
+}
+
+.ai1-direct-generate:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
 .ai-chat-title {
   position: absolute;
   left: 24px;
@@ -1882,7 +1904,7 @@ body {
 .ai1-supplement {
   position: absolute;
   left: 122px;
-  top: 606px;
+  top: 648px;
   width: 149px;
   height: 32px;
   display: flex;
@@ -1906,6 +1928,19 @@ body {
   width: 8px;
   height: 8px;
   display: block;
+}
+
+.ai1-generation-error {
+  position: absolute;
+  left: 27px;
+  top: 688px;
+  width: 341px;
+  margin: 0;
+  color: #8b2f45;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  z-index: 4;
 }
 
 /* ── 底部导航：所有元素从屏幕坐标绝对定位 (Figma: contents 布局) ── */

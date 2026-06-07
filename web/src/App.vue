@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { createTrip, generatePlans, type Plan, type PlanGenerateRequest, type TripDetailPayload } from './api'
 import ItineraryPage from './components/ItineraryPage.vue'
 import DiscoverPage from './components/DiscoverPage.vue'
 import CreatePostPage from './components/CreatePostPage.vue'
@@ -12,10 +13,26 @@ import SettingsPage from './components/SettingsPage.vue'
 import type { PlaceDetail } from './data/placeDetails'
 
 type Screen = 'home1' | 'home2' | 'discover' | 'createPost' | 'ai1' | 'ai5' | 'itinerary' | 'placeDetail' | 'navigation' | 'chat' | 'chatDetail' | 'profile' | 'settings'
+type DetailReturnScreen = Extract<Screen, 'discover' | 'itinerary'>
+
+interface PlaceDetailRequest {
+  detail: PlaceDetail
+  poiId?: string | null
+  returnScreen?: DetailReturnScreen
+}
 
 const activeScreen = ref<Screen>('home1')
 const selectedPlaceDetail = ref<PlaceDetail | null>(null)
+const selectedPoiId = ref<string | null>(null)
+const placeDetailReturnScreen = ref<DetailReturnScreen>('itinerary')
 const profileReturnScreen = ref<Screen>('ai1')
+const currentTrip = ref<TripDetailPayload | null>(null)
+const aiPrompt = ref('')
+const isGeneratingTrip = ref(false)
+const aiGenerationError = ref('')
+
+const DEMO_USER_ID = 'u_demo_001'
+const DEFAULT_CITY = '上海'
 
 interface CardData {
   title: string
@@ -146,6 +163,8 @@ function goToAi1() {
 }
 
 function goToAi5() {
+  ensureAiPrompt()
+
   activeScreen.value = 'ai5'
 }
 
@@ -157,13 +176,26 @@ function setActiveScreen(screen: Screen) {
   activeScreen.value = screen
 }
 
-function openPlaceDetail(detail: PlaceDetail) {
-  selectedPlaceDetail.value = detail
+function openPlaceDetail(detailOrRequest: PlaceDetail | PlaceDetailRequest) {
+  if ('detail' in detailOrRequest) {
+    selectedPlaceDetail.value = detailOrRequest.detail
+    selectedPoiId.value = detailOrRequest.poiId ?? null
+    placeDetailReturnScreen.value = detailOrRequest.returnScreen ?? 'itinerary'
+  } else {
+    selectedPlaceDetail.value = detailOrRequest
+    selectedPoiId.value = null
+    placeDetailReturnScreen.value = activeScreen.value === 'discover' ? 'discover' : 'itinerary'
+  }
+
   activeScreen.value = 'placeDetail'
 }
 
 function goBackToItinerary() {
   activeScreen.value = 'itinerary'
+}
+
+function goBackFromPlaceDetail() {
+  activeScreen.value = placeDetailReturnScreen.value
 }
 
 function goBackToChat() {
@@ -198,6 +230,114 @@ function toggleAi5Activity(tag: string) {
   const idx = ai5Activities.value.indexOf(tag)
   if (idx === -1) ai5Activities.value.push(tag)
   else ai5Activities.value.splice(idx, 1)
+}
+
+function buildPromptFromCard(card: CardData) {
+  return [card.title, ...card.tags].join(' · ')
+}
+
+function ensureAiPrompt() {
+  if (!aiPrompt.value.trim()) {
+    aiPrompt.value = buildPromptFromCard(cardList[currentCardIndex.value])
+  }
+
+  return aiPrompt.value.trim()
+}
+
+function getPlanPreferences() {
+  const timeType = ai5TimeType.value || '短时闲逛'
+  const activities = ai5Activities.value.length ? [...ai5Activities.value] : [...cardList[currentCardIndex.value].tags]
+  const geographicRange = ai5Range.value || '就近玩玩'
+  const budget = ai5Budget.value || '100-200元'
+
+  return {
+    timeType,
+    activities,
+    geographicRange,
+    budget,
+    stay: ai5Stay.value,
+    timelineHours: ai5TimelineValue.value,
+  }
+}
+
+function buildCombinedPrompt() {
+  const basePrompt = ensureAiPrompt()
+  const preferences = getPlanPreferences()
+
+  return [
+    basePrompt,
+    `游玩时间类型：${preferences.timeType}`,
+    preferences.timeType === '短时闲逛' ? `预计可用时间：${preferences.timelineHours}小时` : '',
+    preferences.stay ? `是否留宿：${preferences.stay}` : '',
+    preferences.activities.length ? `活动偏好：${preferences.activities.join('、')}` : '',
+    `出行范围：${preferences.geographicRange}`,
+    `人均预算：${preferences.budget}`,
+  ].filter(Boolean).join('；')
+}
+
+function applyCardPrompt(card: CardData) {
+  aiPrompt.value = buildPromptFromCard(card)
+  goToAi5()
+}
+
+function buildPlanRequest(): PlanGenerateRequest {
+  const preferences = getPlanPreferences()
+
+  return {
+    timeType: preferences.timeType,
+    activities: preferences.activities,
+    geographicRange: preferences.geographicRange,
+    budget: preferences.budget,
+    prompt: buildCombinedPrompt(),
+    city: DEFAULT_CITY,
+  }
+}
+
+function buildTripPlan(plan: Plan, request: string) {
+  return {
+    title: plan.title,
+    totalDuration: plan.duration,
+    totalBudget: plan.budgetText,
+    type: plan.type,
+    source: 'plan-generate',
+    request,
+    spots: plan.spots,
+  }
+}
+
+async function generateTripFromPreferences() {
+  if (isGeneratingTrip.value) return
+
+  isGeneratingTrip.value = true
+  aiGenerationError.value = ''
+
+  try {
+    const planRequest = buildPlanRequest()
+    const plans = await generatePlans(planRequest)
+    const selectedPlan = plans[0]
+
+    if (!selectedPlan) {
+      throw new Error('未生成可用方案，请调整偏好后重试')
+    }
+
+    const createdTrip = await createTrip({
+      userId: DEMO_USER_ID,
+      planId: selectedPlan.planId,
+      plan: buildTripPlan(selectedPlan, planRequest.prompt || ensureAiPrompt()),
+      city: DEFAULT_CITY,
+    })
+
+    currentTrip.value = createdTrip.trip
+    activeScreen.value = 'itinerary'
+  } catch (error) {
+    aiGenerationError.value = error instanceof Error ? error.message : '生成失败，请稍后重试'
+  } finally {
+    isGeneratingTrip.value = false
+  }
+}
+
+async function generateTripDirectly() {
+  await generateTripFromPreferences()
 }
 
 // Phone simulator enhancements
@@ -455,7 +595,7 @@ function takeScreenshot() {
               <!-- 卡片标题 -->
               <p class="ai1-card-title">{{ cardList[currentCardIndex].title }}</p>
               <!-- Go 按钞 -->
-              <button type="button" class="ai1-card-go" aria-label="Go">Go</button>
+              <button type="button" class="ai1-card-go" aria-label="Go" @click="applyCardPrompt(cardList[currentCardIndex])">Go</button>
               <!-- 时间胶囊 -->
               <div class="ai1-card-time-pill">
                 <span class="ai1-card-time-text">{{ cardList[currentCardIndex].time }}</span>
@@ -479,6 +619,7 @@ function takeScreenshot() {
             <label class="ai1-input-bar" data-node-id="233:1064">
               <img :src="ai1SparkIconAsset" alt="" class="ai1-input-spark" />
               <input
+                v-model="aiPrompt"
                 type="text"
                 class="ai1-input-field"
                 aria-label="输入出行想法"
@@ -486,6 +627,16 @@ function takeScreenshot() {
               />
               <img :src="ai1MicGroupAsset" alt="" class="ai1-input-mic" />
             </label>
+
+            <button
+              type="button"
+              class="ai1-direct-generate"
+              :disabled="isGeneratingTrip"
+              :aria-busy="isGeneratingTrip"
+              @click="generateTripDirectly"
+            >
+              {{ isGeneratingTrip ? '正在生成中...' : '直接生成行程' }}
+            </button>
 
             <!-- 补充想法 (left:122 top:606 w:149 h:32) -->
             <div class="ai1-supplement" data-node-id="210:679"
@@ -495,6 +646,10 @@ function takeScreenshot() {
               <span class="ai1-supplement-text">补充我的想法</span>
               <img :src="ai1VectorAsset" alt="" class="ai1-supplement-arrow" />
             </div>
+
+            <p v-if="aiGenerationError" class="ai1-generation-error">
+              {{ aiGenerationError }}
+            </p>
 
             <!-- 底部导航背景胶囊 (left:33 top:765 w:327 h:54) -->
             <div class="ai1-nav-bg" data-node-id="233:997"></div>
@@ -652,9 +807,13 @@ function takeScreenshot() {
                 </div>
               </section>
 
-              <button type="button" class="ai5-cta-btn" @click="activeScreen = 'itinerary'">
-                生成我的闲时计划<span class="ai5-cta-lightning">⚡</span>
+              <button type="button" class="ai5-cta-btn" :disabled="isGeneratingTrip" :aria-busy="isGeneratingTrip" @click="generateTripFromPreferences">
+                {{ isGeneratingTrip ? '正在生成中...' : '生成我的闲时计划' }}<span class="ai5-cta-lightning">⚡</span>
               </button>
+
+              <p v-if="aiGenerationError" style="margin: 12px 18px 0; color: #8b2f45; font-size: 13px; line-height: 1.5;">
+                {{ aiGenerationError }}
+              </p>
             </div>
 
             <!-- Home Indicator -->
@@ -665,11 +824,11 @@ function takeScreenshot() {
 
           <!-- 行程页 (node 156:994) -->
           <main v-else-if="activeScreen === 'itinerary'" class="screen" data-node-id="156:994">
-            <ItineraryPage @navigate="setActiveScreen" @view-detail="openPlaceDetail" />
+            <ItineraryPage :trip="currentTrip" @navigate="setActiveScreen" @view-detail="openPlaceDetail" />
           </main>
 
           <main v-else-if="activeScreen === 'discover'" class="screen" data-node-id="156:553">
-            <DiscoverPage @navigate="setActiveScreen" />
+            <DiscoverPage @navigate="setActiveScreen" @view-detail="openPlaceDetail" />
           </main>
 
           <main v-else-if="activeScreen === 'profile'" class="screen" data-node-id="156:729">
@@ -697,7 +856,7 @@ function takeScreenshot() {
           </main>
 
           <main v-else-if="activeScreen === 'placeDetail'" class="screen" data-node-id="233:1138">
-            <PlaceDetailPage v-if="selectedPlaceDetail" :detail="selectedPlaceDetail" @back="goBackToItinerary" />
+            <PlaceDetailPage v-if="selectedPlaceDetail" :detail="selectedPlaceDetail" :poi-id="selectedPoiId" @back="goBackFromPlaceDetail" />
           </main>
         </div>
       </div>

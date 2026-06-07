@@ -158,6 +158,7 @@ class TripStop(db.Model):
         meta = self.alternatives if isinstance(self.alternatives, dict) else {}
         return {
             'stopId': self.stop_id,
+            'poiId': self.poi_id,
             'index': self.index,
             'time': self.time,
             'endTime': meta.get('endTime', ''),

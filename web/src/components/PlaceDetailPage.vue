@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { PlaceDetail } from '../data/placeDetails'
+import { computed, ref, watch } from 'vue'
+import { getPoiArrivalHints, getPoiDetail, getPoiReviewInsights, type PoiArrivalHintsPayload, type PoiDetailPayload, type PoiReviewInsightsPayload } from '../api'
+import type { PlaceDetail, PlaceReview } from '../data/placeDetails'
 
 const props = defineProps<{
   detail: PlaceDetail
+  poiId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -41,7 +43,126 @@ const detailVisualsByTitle = {
   },
 } as const
 
-const pageVisuals = computed(() => detailVisualsByTitle[props.detail.title as keyof typeof detailVisualsByTitle] ?? null)
+const poiDetail = ref<PoiDetailPayload | null>(null)
+const reviewInsights = ref<PoiReviewInsightsPayload | null>(null)
+const arrivalHints = ref<PoiArrivalHintsPayload | null>(null)
+const isRemoteLoading = ref(false)
+const remoteLoadError = ref('')
+
+function formatBusinessStatus(status: string | undefined) {
+  if (status === 'open') return '营业中'
+  if (status === 'closed') return '已打烊'
+  if (status === 'temporary_closed') return '暂停营业'
+  return status || '营业中'
+}
+
+function formatPriceText(pricePerCapita: number | undefined) {
+  if (!pricePerCapita || pricePerCapita <= 0) {
+    return '免费'
+  }
+
+  return `人均 ¥${pricePerCapita}`
+}
+
+function buildRemoteReviews(): PlaceReview[] {
+  if (!reviewInsights.value) {
+    return props.detail.reviews
+  }
+
+  const ratingValue = Math.max(1, Math.min(5, Math.round(reviewInsights.value.rating || 4)))
+  const reviewCards: PlaceReview[] = []
+  const palette = ['#e9d8cf', '#d9e4f5', '#f0dfc8']
+
+  if (reviewInsights.value.sampleQuote) {
+    reviewCards.push({
+      id: 'remote-review-quote',
+      name: '近期评论',
+      time: '实时同步',
+      text: reviewInsights.value.sampleQuote,
+      rating: ratingValue,
+      likes: 128,
+      dislikes: 3,
+      avatarBg: palette[0],
+    })
+  }
+
+  if (reviewInsights.value.highlights?.length) {
+    reviewCards.push({
+      id: 'remote-review-highlights',
+      name: '高频亮点',
+      time: '评论聚合',
+      text: reviewInsights.value.highlights.join('；'),
+      rating: ratingValue,
+      likes: 96,
+      dislikes: 2,
+      avatarBg: palette[1],
+    })
+  }
+
+  if (reviewInsights.value.riskNotes?.length) {
+    reviewCards.push({
+      id: 'remote-review-risk',
+      name: '避坑提示',
+      time: '评论聚合',
+      text: reviewInsights.value.riskNotes.join('；'),
+      rating: Math.max(3, ratingValue - 1),
+      likes: 67,
+      dislikes: 1,
+      avatarBg: palette[2],
+    })
+  }
+
+  return reviewCards.length ? reviewCards : props.detail.reviews
+}
+
+function buildRemoteReminders() {
+  if (!poiDetail.value) {
+    return props.detail.reminders
+  }
+
+  const nextReminders = [
+    arrivalHints.value?.bestArrivalWindow ? `建议到达：${arrivalHints.value.bestArrivalWindow}` : '',
+    arrivalHints.value?.trafficNote || '',
+    arrivalHints.value?.weatherImpact || '',
+    ...(poiDetail.value.attention || []),
+  ].filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+
+  return nextReminders.length ? nextReminders : props.detail.reminders
+}
+
+const displayDetail = computed<PlaceDetail>(() => {
+  if (!poiDetail.value) {
+    return props.detail
+  }
+
+  const ratingValue = Number(poiDetail.value.rating || 0)
+  const ratingCount = reviewInsights.value?.reviewCount || poiDetail.value.reviewCount || Number(props.detail.ratingCount) || 0
+  const reminderNote = [
+    arrivalHints.value?.queueRisk ? `排队风险：${arrivalHints.value.queueRisk}` : '',
+    arrivalHints.value?.weatherImpact || '',
+    reviewInsights.value?.riskNotes?.[0] || '',
+  ].filter(Boolean).join('；')
+
+  return {
+    ...props.detail,
+    title: poiDetail.value.name || props.detail.title,
+    address: poiDetail.value.address || props.detail.address,
+    hours: poiDetail.value.openHoursText || props.detail.hours,
+    status: formatBusinessStatus(poiDetail.value.businessStatus),
+    description: poiDetail.value.about || props.detail.description,
+    price: formatPriceText(poiDetail.value.pricePerCapita),
+    rating: ratingValue ? ratingValue.toFixed(1) : props.detail.rating,
+    ratingCount: String(ratingCount || props.detail.ratingCount),
+    heroWordmark: poiDetail.value.name || props.detail.heroWordmark,
+    heroCaption: poiDetail.value.category || props.detail.heroCaption,
+    heroMarquee: poiDetail.value.impressionTags?.[0] || poiDetail.value.tags?.[0] || poiDetail.value.category || props.detail.heroMarquee,
+    reviews: buildRemoteReviews(),
+    reminders: buildRemoteReminders(),
+    reminderNote: reminderNote || props.detail.reminderNote,
+  }
+})
+
+const pageVisuals = computed(() => detailVisualsByTitle[displayDetail.value.title as keyof typeof detailVisualsByTitle] ?? null)
 
 function getAvatarLabel(name: string) {
   return name.slice(0, 1)
@@ -58,6 +179,45 @@ function getDisplayStars(rating: number) {
 function getStarIcon(filled: boolean) {
   return filled ? starAsset : starOutlineAsset
 }
+
+watch(
+  () => props.poiId,
+  async (poiId) => {
+    poiDetail.value = null
+    reviewInsights.value = null
+    arrivalHints.value = null
+    remoteLoadError.value = ''
+
+    if (!poiId) {
+      return
+    }
+
+    isRemoteLoading.value = true
+
+    const [detailResult, reviewResult, arrivalResult] = await Promise.allSettled([
+      getPoiDetail(poiId),
+      getPoiReviewInsights(poiId),
+      getPoiArrivalHints(poiId),
+    ])
+
+    if (detailResult.status === 'fulfilled') {
+      poiDetail.value = detailResult.value
+    } else {
+      remoteLoadError.value = detailResult.reason instanceof Error ? detailResult.reason.message : '地点详情同步失败'
+    }
+
+    if (reviewResult.status === 'fulfilled') {
+      reviewInsights.value = reviewResult.value
+    }
+
+    if (arrivalResult.status === 'fulfilled') {
+      arrivalHints.value = arrivalResult.value
+    }
+
+    isRemoteLoading.value = false
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -71,7 +231,7 @@ function getStarIcon(filled: boolean) {
               <img :src="pageVisuals.heroLayers[1]" alt="" class="place-detail-hero-image" />
               <div class="place-detail-hero-wash"></div>
             </template>
-            <div v-else class="place-detail-hero-fallback" :style="{ background: detail.heroBackground }"></div>
+            <div v-else class="place-detail-hero-fallback" :style="{ background: displayDetail.heroBackground }"></div>
           </div>
 
           <div class="place-detail-dots" aria-hidden="true">
@@ -114,11 +274,11 @@ function getStarIcon(filled: boolean) {
           <div class="place-detail-info-card">
             <div class="place-detail-heading-row">
               <div class="place-detail-heading-copy">
-                <h2 class="place-detail-title">{{ detail.title }}</h2>
+                <h2 class="place-detail-title">{{ displayDetail.title }}</h2>
 
                 <p class="place-detail-address">
                   <img :src="mapPinAsset" alt="" />
-                  <span>{{ detail.address }}</span>
+                  <span>{{ displayDetail.address }}</span>
                 </p>
               </div>
 
@@ -128,25 +288,29 @@ function getStarIcon(filled: boolean) {
             <div class="place-detail-meta-row">
               <div class="place-detail-meta-pill place-detail-meta-pill-hours">
                 <img :src="clockAsset" alt="" />
-                <span>{{ detail.hours }}</span>
+                <span>{{ displayDetail.hours }}</span>
               </div>
 
               <div class="place-detail-meta-pill place-detail-meta-pill-status">
                 <img :src="userAsset" alt="" />
-                <span>{{ detail.status }}</span>
+                <span>{{ displayDetail.status }}</span>
               </div>
             </div>
 
-            <p class="place-detail-description">{{ detail.description }}</p>
+            <p class="place-detail-description">{{ displayDetail.description }}</p>
 
             <div class="place-detail-rating-row">
-              <p class="place-detail-price">{{ detail.price }}</p>
+              <p class="place-detail-price">{{ displayDetail.price }}</p>
 
               <div class="place-detail-rating">
                 <img :src="starAsset" alt="" />
-                <span>{{ detail.rating }} ({{ detail.ratingCount }})</span>
+                <span>{{ displayDetail.rating }} ({{ displayDetail.ratingCount }})</span>
               </div>
             </div>
+
+            <p v-if="isRemoteLoading || remoteLoadError" :style="{ margin: '12px 0 0', color: remoteLoadError ? '#8b2f45' : '#6c6868', fontSize: '12px', lineHeight: '18px' }">
+              {{ remoteLoadError || '正在同步地点信息...' }}
+            </p>
 
             <div class="place-detail-cta-row">
               <button type="button" class="place-detail-cta place-detail-cta-dark">加入收藏</button>
@@ -163,7 +327,7 @@ function getStarIcon(filled: boolean) {
 
             <div class="place-detail-review-list">
               <article
-                v-for="(review, index) in detail.reviews.slice(0, 3)"
+                v-for="(review, index) in displayDetail.reviews.slice(0, 3)"
                 :key="review.id"
                 class="place-detail-review-card"
                 :class="index === 0 ? 'place-detail-review-card-compact' : 'place-detail-review-card-tall'"
@@ -238,13 +402,13 @@ function getStarIcon(filled: boolean) {
           <img :src="dividerAsset" alt="" class="place-detail-reminder-divider place-detail-reminder-divider-right" />
 
           <div class="place-detail-reminder-listing">
-            <div v-for="item in detail.reminders.slice(0, 3)" :key="item" class="place-detail-reminder-item">
+            <div v-for="item in displayDetail.reminders.slice(0, 3)" :key="item" class="place-detail-reminder-item">
               <img :src="bulletAsset" alt="" class="place-detail-reminder-bullet" />
               <span>{{ item }}</span>
             </div>
           </div>
 
-          <p class="place-detail-reminder-note">{{ detail.reminderNote }}</p>
+          <p class="place-detail-reminder-note">{{ displayDetail.reminderNote }}</p>
         </section>
       </div>
     </div>

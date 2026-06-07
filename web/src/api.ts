@@ -41,6 +41,166 @@ export interface GroupPayload {
   mode?: string
 }
 
+export interface TripStopPayload {
+  stopId: string
+  poiId?: string
+  index: number
+  time: string
+  endTime?: string
+  name: string
+  desc: string
+  category?: string
+  address?: string
+  lat?: number | null
+  lng?: number | null
+  pricePerCapita?: number | null
+  rating?: number | null
+  walkFromPrevious?: number
+  tags?: string[]
+  queueInfo?: string | null
+  durationMinutes?: number
+  done?: boolean
+  checkinTime?: string | null
+  alternatives?: any[]
+}
+
+export interface TripDetailPayload {
+  tripId: string
+  title: string
+  city: string
+  date: string
+  totalBudget: string
+  status: string
+  overview: Record<string, any>
+  routeMap: Record<string, any>
+  stops: TripStopPayload[]
+}
+
+export interface PoiDetailPayload {
+  poiId: string
+  name: string
+  category: string
+  address: string
+  lat: number
+  lng: number
+  pricePerCapita: number
+  rating: number
+  businessStatus: string
+  openHoursText: string
+  phone: string
+  heroImage: string
+  tags: string[]
+  about: string
+  impressionTags: string[]
+  suitableFor: string[]
+  attention: string[]
+  userQuote: string
+  peakHours: string
+  facilities: string[]
+  mustTry: string
+  reviewCount: number
+  photoCount: number
+}
+
+export interface PoiReviewInsightsPayload {
+  poiId: string
+  rating: number
+  reviewCount: number
+  impressionTags: string[]
+  highlights: string[]
+  riskNotes: string[]
+  sampleQuote: string
+}
+
+export interface PoiArrivalHintsPayload {
+  poiId: string
+  stopId: string
+  queueRisk: string
+  bestArrivalWindow: string
+  trafficNote: string
+  weatherImpact: string
+}
+
+export interface DiscoverPlaceItem {
+  itemId: string
+  name: string
+  category: string
+  badge: string
+  subtitle: string
+  layout: string
+  gradient: string
+}
+
+export interface UserProfilePayload {
+  userId: string
+  nickname: string
+  avatar?: string
+  location?: string
+  stats?: {
+    footprints: number
+    favorites: number
+    completedTrips: number
+  }
+  favoriteCategories?: Array<{ category: string; count: number; avgAmount?: number }>
+  favoriteDistricts?: Array<{ district: string; count: number }>
+  favoriteTags?: string[]
+  avgSpending?: number
+  totalVisits?: number
+  preferredTime?: string
+  soloRatio?: number
+  socialRatio?: number
+  ratingAvg?: number
+  personaSummary?: string
+  personaTags?: string[]
+  socialStyle?: string
+  groupSizePreference?: number
+  dietary?: string[]
+  mobility?: string
+  budgetComfort?: number
+  freeSlots?: string[]
+  rawRecordCount?: number
+  interestCategories?: Array<{ category: string; count: number }>
+  sourceBreakdown?: Record<string, number>
+  mobilitySignals?: Record<string, number>
+  homeArea?: string
+  workArea?: string
+}
+
+export interface TripReminderPayload {
+  tripId: string
+  today: string[]
+  packingChecklist: string[]
+}
+
+export interface TripWeatherPayload {
+  tripId: string
+  city: string
+  date: string
+  provider: string
+  condition: string
+  temperatureText: string
+  humidity: string
+  wind: string
+  rainProbability: number
+  comfortLevel: string
+  agentTips: string[]
+  impact: Record<string, string>
+}
+
+export interface TripAlternativePayload {
+  candidateId: string
+  name: string
+  categoryTags: string[]
+  priceRange: string
+  walkMinutes: number
+  reason: string
+}
+
+export interface TripAlternativesPayload {
+  stopId: string
+  alternatives: TripAlternativePayload[]
+}
+
 interface PlanGenerateRequest {
   timeType: string
   activities: string[]
@@ -138,18 +298,18 @@ export async function createTrip(params: {
   plan: Plan | any
   date?: string
   city?: string
-}): Promise<{ tripId: string; trip: any }> {
+}): Promise<{ tripId: string; trip: TripDetailPayload }> {
   return request('/trip/create', {
     method: 'POST',
     body: JSON.stringify(params),
   })
 }
 
-export async function getTripDetail(tripId: string): Promise<any> {
+export async function getTripDetail(tripId: string): Promise<TripDetailPayload> {
   return request(`/trip/${tripId}`)
 }
 
-export async function getTripReminders(tripId: string): Promise<any> {
+export async function getTripReminders(tripId: string): Promise<TripReminderPayload> {
   return request(`/trip/${tripId}/reminders`)
 }
 
@@ -157,7 +317,7 @@ export async function getTripRouteMap(tripId: string): Promise<any> {
   return request(`/trip/${tripId}/route-map`)
 }
 
-export async function getTripWeather(tripId: string): Promise<any> {
+export async function getTripWeather(tripId: string): Promise<TripWeatherPayload> {
   return request(`/trip/${tripId}/weather`)
 }
 
@@ -172,7 +332,7 @@ export async function adjustTrip(tripId: string, mode: string): Promise<any> {
   })
 }
 
-export async function getTripAlternatives(tripId: string, stopId: string): Promise<any> {
+export async function getTripAlternatives(tripId: string, stopId: string): Promise<TripAlternativesPayload> {
   return request(`/trip/${tripId}/stops/${stopId}/alternatives`)
 }
 
@@ -183,15 +343,24 @@ export async function replaceTripStop(tripId: string, stopId: string, candidateI
   })
 }
 
-export async function getPoiDetail(poiId: string): Promise<any> {
+export async function getPoiDetail(poiId: string): Promise<PoiDetailPayload> {
   return request(`/pois/${poiId}`)
+}
+
+export async function getPoiReviewInsights(poiId: string): Promise<PoiReviewInsightsPayload> {
+  return request(`/pois/${poiId}/review-insights`)
+}
+
+export async function getPoiArrivalHints(poiId: string, stopId?: string): Promise<PoiArrivalHintsPayload> {
+  const params = stopId ? `?stopId=${encodeURIComponent(stopId)}` : ''
+  return request(`/pois/${poiId}/arrival-hints${params}`)
 }
 
 export async function getDiscoverCategories(): Promise<{ categories: string[] }> {
   return request('/discover/categories')
 }
 
-export async function getDiscoverPlaces(category?: string): Promise<{ items: any[] }> {
+export async function getDiscoverPlaces(category?: string): Promise<{ items: DiscoverPlaceItem[] }> {
   const params = category && category !== '全部' ? `?category=${category}` : ''
   return request(`/discover/places${params}`)
 }
@@ -200,7 +369,7 @@ export async function getDiscoverEvents(): Promise<{ events: any[] }> {
   return request('/discover/events')
 }
 
-export async function getUserProfile(userId: string = 'u_demo_001'): Promise<any> {
+export async function getUserProfile(userId: string = 'u_demo_001'): Promise<UserProfilePayload> {
   return request(`/user/profile?userId=${userId}`)
 }
 

@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { getTripAlternatives, getTripReminders, getTripWeather, replaceTripStop, type TripAlternativePayload, type TripDetailPayload, type TripReminderPayload, type TripStopPayload, type TripWeatherPayload } from '../api'
 import ItineraryMap from './ItineraryMap.vue'
 import { itineraryKilometersPerPixel, itinerarySegmentAccessKilometers, itineraryWalkMinutesPerKilometer, routePointMap, type RoutePoint } from '../data/itineraryRoute'
 import { resolvePlaceDetail, type PlaceDetail } from '../data/placeDetails'
 
+const props = defineProps<{
+  trip?: TripDetailPayload | null
+}>()
+
 const emit = defineEmits<{
   navigate: [screen: 'ai1' | 'discover' | 'itinerary' | 'navigation' | 'chat' | 'profile']
-  viewDetail: [detail: PlaceDetail]
+  viewDetail: [payload: { detail: PlaceDetail; poiId?: string | null; returnScreen: 'itinerary' }]
 }>()
 
 const levelsAsset = '/Levels.svg'
@@ -43,6 +48,8 @@ type StopBlueprint = {
   tags: string[]
   priceRange: PriceRange
   routePoint: MapPoint
+  stopId?: string
+  poiId?: string
 }
 
 type ItineraryStop = StopBlueprint & {
@@ -52,6 +59,24 @@ type ItineraryStop = StopBlueprint & {
 type ReplacementOption = StopBlueprint & {
   id: string
   summary: string
+}
+
+type RemoteSwapOption = {
+  id: string
+  title: string
+  priceLabel: string
+  travelLabel: string
+  summary: string
+  candidateId: string
+  categoryTags: string[]
+  rawPriceRange: string
+  kind: 'remote'
+}
+
+type LocalSwapOptionView = ReplacementOption & {
+  priceLabel: string
+  travelLabel: string
+  kind: 'local'
 }
 
 type StopLayout = {
@@ -126,6 +151,8 @@ function clonePoint(point: MapPoint): MapPoint {
 function cloneStop(stop: ItineraryStop): ItineraryStop {
   return {
     id: stop.id,
+    stopId: stop.stopId,
+    poiId: stop.poiId,
     venueKey: stop.venueKey,
     swapGroup: stop.swapGroup,
     timeLabel: stop.timeLabel,
@@ -143,6 +170,8 @@ function createStopInstance(blueprint: StopBlueprint, forcedId?: number): Itiner
 
   return {
     id: nextId,
+    stopId: blueprint.stopId,
+    poiId: blueprint.poiId,
     venueKey: blueprint.venueKey,
     swapGroup: blueprint.swapGroup,
     timeLabel: blueprint.timeLabel,
@@ -339,6 +368,141 @@ function buildAllStopBlueprints(): StopBlueprint[] {
 
 const allStopBlueprints = buildAllStopBlueprints()
 
+function normalizeVenueTitle(value: string) {
+  return value.replace(/（.*?）/g, '').trim().toLowerCase()
+}
+
+function findBlueprintForTripStop(stop: TripStopPayload, fallbackIndex: number) {
+  const stopName = normalizeVenueTitle(stop.name || '')
+
+  if (stopName) {
+    const matchedBlueprint = allStopBlueprints.find((blueprint) => {
+      const blueprintName = normalizeVenueTitle(blueprint.title)
+      return blueprintName === stopName || blueprintName.includes(stopName) || stopName.includes(blueprintName)
+    })
+
+    if (matchedBlueprint) {
+      return matchedBlueprint
+    }
+  }
+
+  return defaultStopBlueprints[Math.min(fallbackIndex, defaultStopBlueprints.length - 1)]
+}
+
+function buildTripStopTimeLabel(stop: TripStopPayload, fallback: StopBlueprint) {
+  if (stop.time && stop.endTime) {
+    const durationSuffix = stop.durationMinutes ? `（${stop.durationMinutes}分钟）` : ''
+    return `${stop.time} - ${stop.endTime}${durationSuffix}`
+  }
+
+  if (stop.time && stop.durationMinutes) {
+    return `${stop.time}（${stop.durationMinutes}分钟）`
+  }
+
+  if (stop.time) {
+    return stop.time
+  }
+
+  return fallback.timeLabel
+}
+
+function buildTripStopPriceRange(stop: TripStopPayload, fallback: StopBlueprint): PriceRange {
+  const priceValue = Number(stop.pricePerCapita)
+
+  if (Number.isFinite(priceValue) && priceValue > 0) {
+    return { min: priceValue, max: priceValue }
+  }
+
+  return clonePriceRange(fallback.priceRange)
+}
+
+function createStopFromTrip(stop: TripStopPayload, fallbackIndex: number) {
+  const fallbackBlueprint = findBlueprintForTripStop(stop, fallbackIndex)
+
+  return createStopInstance(
+    {
+      venueKey: fallbackBlueprint.venueKey,
+      swapGroup: fallbackBlueprint.swapGroup,
+      timeLabel: buildTripStopTimeLabel(stop, fallbackBlueprint),
+      durationMinutes: stop.durationMinutes || fallbackBlueprint.durationMinutes,
+      title: stop.name || fallbackBlueprint.title,
+      tags: stop.tags?.length ? [...stop.tags] : [...fallbackBlueprint.tags],
+      priceRange: buildTripStopPriceRange(stop, fallbackBlueprint),
+      routePoint: clonePoint(fallbackBlueprint.routePoint),
+      stopId: stop.stopId,
+      poiId: stop.poiId,
+    },
+    fallbackIndex + 1,
+  )
+}
+
+function buildPackingItems(items: string[]) {
+  return items.map((text, index) => ({
+    id: `packing-remote-${index + 1}`,
+    text,
+    checked: false,
+  }))
+}
+
+function buildRemindersFromApi(reminders: TripReminderPayload | null, weather: TripWeatherPayload | null, fallback: TripDetailPayload) {
+  const merged = [
+    weather ? `${weather.condition} ${weather.temperatureText}` : '',
+    ...(reminders?.today || []),
+    ...((weather?.agentTips || []).slice(0, 2)),
+  ].filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+
+  if (merged.length) {
+    return Array.from(new Set(merged)).slice(0, 5).map((text, index) => ({
+      id: `reminder-api-${index + 1}`,
+      text,
+      done: false,
+    }))
+  }
+
+  return buildRemindersFromTrip(fallback)
+}
+
+function parseRemotePriceRange(value: string, fallback: PriceRange) {
+  const matched = value.match(/(\d+)/g)
+  if (!matched || matched.length === 0) {
+    return clonePriceRange(fallback)
+  }
+
+  const values = matched.map((item) => Number(item)).filter((item) => Number.isFinite(item))
+  if (!values.length) {
+    return clonePriceRange(fallback)
+  }
+
+  return {
+    min: values[0],
+    max: values[1] ?? values[0],
+  }
+}
+
+function buildRemindersFromTrip(trip: TripDetailPayload): ReminderItem[] {
+  const overview = trip.overview || {}
+  const fitReasons = Array.isArray(overview.fitReasons) ? overview.fitReasons : []
+  const conflicts = Array.isArray(overview.conflicts) ? overview.conflicts : []
+  const merged = [...fitReasons, ...conflicts].filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+
+  if (merged.length) {
+    return merged.slice(0, 3).map((text, index) => ({
+      id: `reminder-trip-${index + 1}`,
+      text,
+      done: false,
+    }))
+  }
+
+  const firstStop = trip.stops[0]
+  return [
+    {
+      id: 'reminder-trip-default',
+      text: firstStop?.queueInfo || `${trip.city || '当前城市'}行程已同步`,
+      done: false,
+    },
+  ]
+}
+
 function createDefaultItinerary() {
   return defaultStopBlueprints.map((blueprint, index) => createStopInstance(blueprint, index + 1))
 }
@@ -350,6 +514,8 @@ const scrollRoot = ref<HTMLElement | null>(null)
 const draggingStopId = ref<number | null>(null)
 const dragOverStopId = ref<number | null>(null)
 const removedStopNotice = ref<RemovedStopNotice | null>(null)
+const remoteSwapOptions = ref<Record<number, RemoteSwapOption[]>>({})
+const loadingSwapStopId = ref<number | null>(null)
 
 function formatStopPrice(priceRange: PriceRange) {
   if (priceRange.min === priceRange.max) {
@@ -440,12 +606,16 @@ const itinerarySummaryStats = computed(() => {
   const totalWalkMinutes = routeSegments.value.reduce((sum, segment) => sum + segment.averageMinutes, 0)
   const minBudget = itineraryStops.value.reduce((sum, stop) => sum + stop.priceRange.min, 0)
   const maxBudget = itineraryStops.value.reduce((sum, stop) => sum + stop.priceRange.max, 0)
+  const tripOverview = props.trip?.overview || {}
+  const tripDistance = Number(tripOverview.distanceKm)
+  const tripWalkMinutes = Number(tripOverview.totalWalkMinutes ?? tripOverview.walkDurationMinutes)
+  const tripTransportMode = typeof tripOverview.transportMode === 'string' ? tripOverview.transportMode : ''
 
   return [
-    { label: '总路程', value: formatDistance(totalDistance) },
-    { label: '预算估测', value: formatBudgetEstimate(minBudget, maxBudget) },
-    { label: '交通方式', value: '全程步行' },
-    { label: '步行时间', value: formatWalkTotal(totalWalkMinutes) },
+    { label: '总路程', value: Number.isFinite(tripDistance) && tripDistance > 0 ? formatDistance(tripDistance) : formatDistance(totalDistance) },
+    { label: '预算估测', value: props.trip?.totalBudget || formatBudgetEstimate(minBudget, maxBudget) },
+    { label: '交通方式', value: tripTransportMode || '全程步行' },
+    { label: '步行时间', value: Number.isFinite(tripWalkMinutes) && tripWalkMinutes > 0 ? formatWalkTotal(tripWalkMinutes) : formatWalkTotal(totalWalkMinutes) },
   ]
 })
 
@@ -506,8 +676,12 @@ const activeSwapStopOrder = computed(() => {
   return index === -1 ? null : index + 1
 })
 
-const activeSwapOptions = computed(() => {
+const activeSwapOptions = computed<Array<LocalSwapOptionView | RemoteSwapOption>>(() => {
   if (activeSwapStop.value === null) return []
+
+  if (activeSwapStop.value.id in remoteSwapOptions.value) {
+    return remoteSwapOptions.value[activeSwapStop.value.id]
+  }
 
   return replacementOptionsByGroup[activeSwapStop.value.swapGroup]
     .filter((option) => option.venueKey !== activeSwapStop.value?.venueKey)
@@ -515,11 +689,44 @@ const activeSwapOptions = computed(() => {
       ...option,
       priceLabel: formatSwapOptionPrice(option.priceRange),
       travelLabel: calculateTravelSegment(activeSwapStop.value!.routePoint, option.routePoint).label,
+      kind: 'local' as const,
     }))
 })
 
-function openSwapOptions(stopId: number) {
+async function openSwapOptions(stopId: number) {
   activeSwapStopId.value = stopId
+
+  const stop = itineraryStops.value.find((item) => item.id === stopId)
+  if (!stop || !props.trip?.tripId || !stop.stopId || stopId in remoteSwapOptions.value) {
+    return
+  }
+
+  loadingSwapStopId.value = stopId
+
+  try {
+    const data = await getTripAlternatives(props.trip.tripId, stop.stopId)
+    remoteSwapOptions.value = {
+      ...remoteSwapOptions.value,
+      [stopId]: (data.alternatives || []).map((option: TripAlternativePayload) => ({
+        id: option.candidateId,
+        candidateId: option.candidateId,
+        title: option.name,
+        categoryTags: option.categoryTags || [],
+        priceLabel: `约￥${option.priceRange}`,
+        rawPriceRange: option.priceRange,
+        travelLabel: `步行约 ${option.walkMinutes} 分钟`,
+        summary: option.reason,
+        kind: 'remote' as const,
+      })),
+    }
+  } catch {
+    remoteSwapOptions.value = {
+      ...remoteSwapOptions.value,
+      [stopId]: [],
+    }
+  } finally {
+    loadingSwapStopId.value = null
+  }
 }
 
 function closeSwapOptions() {
@@ -653,12 +860,31 @@ function removeStop(stopId: number) {
   }
 }
 
-function applySwapOption(option: ReplacementOption) {
+async function applySwapOption(option: LocalSwapOptionView | RemoteSwapOption) {
   const index = itineraryStops.value.findIndex((stop) => stop.id === activeSwapStopId.value)
   if (index === -1) return
 
+  const currentStop = itineraryStops.value[index]
+
+  if (option.kind === 'remote') {
+    if (props.trip?.tripId && currentStop.stopId) {
+      await replaceTripStop(props.trip.tripId, currentStop.stopId, option.candidateId)
+    }
+
+    itineraryStops.value[index] = {
+      ...currentStop,
+      poiId: option.candidateId.replace(/^alt_/, ''),
+      title: option.title,
+      tags: option.categoryTags.length ? [...option.categoryTags] : [...currentStop.tags],
+      priceRange: parseRemotePriceRange(option.rawPriceRange, currentStop.priceRange),
+    }
+
+    closeSwapOptions()
+    return
+  }
+
   itineraryStops.value[index] = {
-    id: itineraryStops.value[index].id,
+    ...currentStop,
     venueKey: option.venueKey,
     swapGroup: option.swapGroup,
     timeLabel: option.timeLabel,
@@ -675,11 +901,15 @@ function applySwapOption(option: ReplacementOption) {
 function openStopDetail(stop: ItineraryStop) {
   emit(
     'viewDetail',
-    resolvePlaceDetail({
-      title: stop.title,
-      tags: stop.tags,
-      price: formatStopPrice(stop.priceRange),
-    }),
+    {
+      detail: resolvePlaceDetail({
+        title: stop.title,
+        tags: stop.tags,
+        price: formatStopPrice(stop.priceRange),
+      }),
+      poiId: stop.poiId ?? null,
+      returnScreen: 'itinerary',
+    },
   )
 }
 
@@ -707,6 +937,56 @@ const packingDraft = ref('')
 const adjustmentDraft = ref('')
 const selectedAdjustmentId = ref<string | null>(null)
 const itineraryPrompt = ref('今天突然下雨了，不去室外')
+
+watch(
+  () => props.trip,
+  (trip) => {
+    if (!trip) {
+      return
+    }
+
+    const orderedStops = [...(trip.stops || [])]
+      .sort((left, right) => left.index - right.index)
+      .slice(0, maxVisibleStops)
+
+    itineraryStops.value = orderedStops.length
+      ? orderedStops.map((stop, index) => createStopFromTrip(stop, index))
+      : createDefaultItinerary()
+
+    startLocation.value = defaultStartLocation
+    endLocation.value = orderedStops.at(-1)?.address || orderedStops.at(-1)?.name || defaultEndLocation
+    itineraryReminders.value = buildRemindersFromTrip(trip)
+    remoteSwapOptions.value = {}
+    itineraryPrompt.value = typeof trip.overview?.request === 'string' && trip.overview.request.trim()
+      ? trip.overview.request
+      : itineraryPrompt.value
+
+    closeSwapOptions()
+    clearStopDragState()
+    clearRemovedStopNotice()
+
+    void (async () => {
+      const [reminderResult, weatherResult] = await Promise.allSettled([
+        getTripReminders(trip.tripId),
+        getTripWeather(trip.tripId),
+      ])
+
+      if (props.trip?.tripId !== trip.tripId) {
+        return
+      }
+
+      const remoteReminders = reminderResult.status === 'fulfilled' ? reminderResult.value : null
+      const remoteWeather = weatherResult.status === 'fulfilled' ? weatherResult.value : null
+
+      itineraryReminders.value = buildRemindersFromApi(remoteReminders, remoteWeather, trip)
+
+      if (remoteReminders?.packingChecklist?.length) {
+        itineraryPackingList.value = buildPackingItems(remoteReminders.packingChecklist)
+      }
+    })()
+  },
+  { immediate: true },
+)
 
 function addReminder() {
   const text = reminderDraft.value.trim()
@@ -1116,7 +1396,15 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <div class="itinerary-swap-sheet-grid">
+        <div v-if="loadingSwapStopId === activeSwapStop?.id" style="padding: 28px 16px 12px; text-align: center; color: #6c6868; font-size: 13px; line-height: 20px;">
+          正在获取可替换站点...
+        </div>
+
+        <div v-else-if="activeSwapOptions.length === 0" style="padding: 28px 16px 12px; text-align: center; color: #8b2f45; font-size: 13px; line-height: 20px;">
+          当前没有可替换的附近站点
+        </div>
+
+        <div v-else class="itinerary-swap-sheet-grid">
           <article v-for="option in activeSwapOptions" :key="option.id" class="itinerary-swap-option-card">
             <div class="itinerary-swap-option-head">
               <h4 class="itinerary-swap-option-title">{{ option.title }}</h4>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { getUserFootprints, getUserProfile, type UserProfilePayload } from '../api'
 
 type Screen = 'discover' | 'ai1' | 'itinerary' | 'chat' | 'settings'
 
@@ -31,24 +32,87 @@ const settingsMenuItems: SettingsMenuItem[] = [
 const isSettingsMenuOpen = ref(false)
 const settingsButton = useTemplateRef<HTMLButtonElement>('settingsButton')
 const settingsMenu = useTemplateRef<HTMLDivElement>('settingsMenu')
+const profileData = ref<UserProfilePayload | null>(null)
+const footprints = ref<Array<{ title: string; meta: string }>>([])
+const isLoading = ref(false)
+const loadError = ref('')
+const demoUserId = 'u_demo_001'
 
-const stats = [
-  { label: '收藏', value: '24' },
-  { label: '去过', value: '12' },
-  { label: '足迹', value: '8' },
-]
+const stats = computed(() => {
+  const remoteStats = profileData.value?.stats
+  if (!remoteStats) {
+    return [
+      { label: '收藏', value: '24' },
+      { label: '去过', value: '12' },
+      { label: '足迹', value: '8' },
+    ]
+  }
 
-const preferences = [
-  { key: 'camera', label: '拍照打卡' },
-  { key: 'book', label: '书店阅读' },
-  { key: 'gallery', label: '看展览' },
-  { key: 'food', label: '寻味美食' },
-]
+  return [
+    { label: '收藏', value: String(remoteStats.favorites ?? 0) },
+    { label: '去过', value: String(remoteStats.completedTrips ?? 0) },
+    { label: '足迹', value: String(remoteStats.footprints ?? 0) },
+  ]
+})
 
-const recentTrails = [
-  { title: '午后书店漫游', meta: '2023.11.12 · 虹口区' },
-  { title: '武康路老洋房摄影', meta: '2023.11.05 · 徐汇区' },
-]
+function inferPreferenceKey(label: string) {
+  if (/拍|照|摄影/.test(label)) return 'camera'
+  if (/书|阅读|文字/.test(label)) return 'book'
+  if (/展|艺术|美术/.test(label)) return 'gallery'
+  return 'food'
+}
+
+const preferences = computed(() => {
+  const labels = [
+    ...(profileData.value?.personaTags || []),
+    ...(profileData.value?.favoriteTags || []),
+    ...((profileData.value?.favoriteCategories || []).map((item) => item.category)),
+  ]
+
+  const uniqueLabels = Array.from(new Set(labels.filter(Boolean))).slice(0, 4)
+  const fallbackLabels = ['拍照打卡', '书店阅读', '看展览', '寻味美食']
+  const sourceLabels = uniqueLabels.length ? uniqueLabels : fallbackLabels
+
+  return sourceLabels.map((label) => ({
+    key: inferPreferenceKey(label),
+    label,
+  }))
+})
+
+const recentTrails = computed(() => {
+  return footprints.value.length
+    ? footprints.value
+    : [
+        { title: '午后书店漫游', meta: '2023.11.12 · 虹口区' },
+        { title: '武康路老洋房摄影', meta: '2023.11.05 · 徐汇区' },
+      ]
+})
+
+const displayName = computed(() => profileData.value?.nickname || '探索者小李')
+const displayMotto = computed(() => profileData.value?.personaSummary || '让生活在慢节奏中开花')
+const displayAvatar = computed(() => profileData.value?.avatar || avatarAsset)
+
+async function loadProfileData() {
+  isLoading.value = true
+  loadError.value = ''
+
+  try {
+    const [profile, userFootprints] = await Promise.all([
+      getUserProfile(demoUserId),
+      getUserFootprints(demoUserId),
+    ])
+
+    profileData.value = profile
+    footprints.value = (userFootprints.footprints || []).slice(0, 3).map((item) => ({
+      title: item.poiName || item.category || '最近足迹',
+      meta: [item.date, item.locationContext || item.category].filter(Boolean).join(' · '),
+    }))
+  } catch (error) {
+    loadError.value = error instanceof Error ? error.message : '个人页数据加载失败'
+  } finally {
+    isLoading.value = false
+  }
+}
 
 function toggleSettingsMenu() {
   isSettingsMenuOpen.value = !isSettingsMenuOpen.value
@@ -81,6 +145,7 @@ function handleDocumentPointerDown(event: PointerEvent) {
 
 onMounted(() => {
   document.addEventListener('pointerdown', handleDocumentPointerDown)
+  void loadProfileData()
 })
 
 onBeforeUnmount(() => {
@@ -133,7 +198,7 @@ onBeforeUnmount(() => {
       <section class="profile-hero">
         <div class="profile-avatar-wrap">
           <div class="profile-avatar-ring">
-            <img :src="avatarAsset" alt="探索者小李头像" class="profile-avatar-image" />
+            <img :src="displayAvatar" :alt="`${displayName}头像`" class="profile-avatar-image" />
           </div>
 
           <button type="button" class="profile-avatar-edit" aria-label="编辑头像">
@@ -146,8 +211,11 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <h1 class="profile-name">探索者小李</h1>
-        <p class="profile-motto">让生活在慢节奏中开花</p>
+        <h1 class="profile-name">{{ displayName }}</h1>
+        <p class="profile-motto">{{ displayMotto }}</p>
+        <p v-if="isLoading || loadError" :style="{ margin: '8px 0 0', color: loadError ? '#8b2f45' : '#6c6868', fontSize: '12px', lineHeight: '18px' }">
+          {{ loadError || '正在同步个人画像...' }}
+        </p>
       </section>
 
       <section class="profile-stats-card">

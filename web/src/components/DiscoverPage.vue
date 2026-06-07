@@ -1,12 +1,18 @@
 <script setup lang="ts">
+import { onMounted, ref, watch } from 'vue'
+import { getDiscoverCategories, getDiscoverPlaces, type DiscoverPlaceItem } from '../api'
+import { resolvePlaceDetail, type PlaceDetail } from '../data/placeDetails'
+
 type Screen = 'discover' | 'createPost' | 'ai1' | 'itinerary' | 'chat' | 'profile'
 
 const emit = defineEmits<{
   navigate: [screen: Screen]
+  viewDetail: [payload: { detail: PlaceDetail; poiId?: string | null; returnScreen: 'discover' }]
 }>()
 
 type DiscoverCard = {
   id: string
+  poiId: string
   title: string
   subtitle?: string
   tags: string[]
@@ -30,69 +36,93 @@ const chatAsset = '/ChatTeardrop-dark.svg'
 const locationAsset = '/Icon-4.svg'
 const cafeStarAsset = '/Item 2_ Cafe/Icon-6.svg'
 
-const topCategories = ['推荐', '拍照', '看展', '美食', '逛街', '阅读']
-
-const discoverCards: DiscoverCard[] = [
-  {
-    id: 'building',
-    title: '武康大楼的落日午后',
-    tags: ['出片', '历史感'],
-    distance: '1.2km',
-    price: '￥50+',
-    image:
-      '/discover-building.png',
-    layoutClass: 'discover-card-building',
-    footer: 'price',
-  },
-  {
-    id: 'bread',
-    title: '愚园路的面包香气',
-    tags: ['手作', '安静'],
-    distance: '3.5km',
-    price: '￥45+',
-    image:
-      '/discover-bread.png',
-    layoutClass: 'discover-card-bread',
-    footer: 'price',
-  },
-  {
-    id: 'museum',
-    title: '当代艺术馆：光之影',
-    tags: ['看展', '冷气足'],
-    distance: '4.8km',
-    price: '￥80',
-    image:
-      '/discover-museum.png',
-    layoutClass: 'discover-card-museum',
-    footer: 'price',
-  },
-  {
-    id: 'park',
-    title: '徐家汇公园的秘密步\n道',
-    tags: ['运动', '吸氧'],
-    distance: '0.5km',
-    price: '免费',
-    image:
-      '/discover-park.png',
-    layoutClass: 'discover-card-park',
-    footer: 'price',
-  },
-  {
-    id: 'cafe',
-    title: '薄荷色午后咖啡',
-    subtitle: '适合情侣约会的温馨角',
-    tags: ['情侣约会'],
-    distance: '1.2km',
-    image:
-      '/discover-cafe.png',
-    layoutClass: 'discover-card-cafe',
-    footer: 'actions',
-  },
+const cardLayouts = [
+  'discover-card-building',
+  'discover-card-bread',
+  'discover-card-museum',
+  'discover-card-park',
+  'discover-card-cafe',
 ]
 
-function isActiveCategory(label: string) {
-  return label === '推荐'
+const cardImages = [
+  '/discover-building.png',
+  '/discover-bread.png',
+  '/discover-museum.png',
+  '/discover-park.png',
+  '/discover-cafe.png',
+]
+
+const categories = ref<string[]>(['全部'])
+const selectedCategory = ref('全部')
+const discoverCards = ref<DiscoverCard[]>([])
+const isLoading = ref(false)
+const loadError = ref('')
+
+function buildDiscoverCard(item: DiscoverPlaceItem, index: number): DiscoverCard {
+  return {
+    id: item.itemId,
+    poiId: item.itemId,
+    title: item.name,
+    subtitle: item.subtitle,
+    tags: [item.category, item.badge].filter(Boolean),
+    distance: item.subtitle || item.category,
+    price: item.badge || '推荐',
+    image: cardImages[index % cardImages.length],
+    layoutClass: cardLayouts[index % cardLayouts.length],
+    footer: 'price',
+  }
 }
+
+async function loadCategories() {
+  const data = await getDiscoverCategories()
+  if (data.categories.length) {
+    categories.value = data.categories
+    if (!data.categories.includes(selectedCategory.value)) {
+      selectedCategory.value = data.categories[0]
+    }
+  }
+}
+
+async function loadPlaces() {
+  isLoading.value = true
+  loadError.value = ''
+
+  try {
+    const data = await getDiscoverPlaces(selectedCategory.value)
+    discoverCards.value = data.items.slice(0, 5).map((item, index) => buildDiscoverCard(item, index))
+  } catch (error) {
+    loadError.value = error instanceof Error ? error.message : '发现页数据加载失败'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+function openCard(card: DiscoverCard) {
+  emit('viewDetail', {
+    detail: resolvePlaceDetail({
+      title: card.title,
+      tags: card.tags,
+      price: card.price,
+    }),
+    poiId: card.poiId,
+    returnScreen: 'discover',
+  })
+}
+
+function isActiveCategory(label: string) {
+  return label === selectedCategory.value
+}
+
+watch(selectedCategory, (nextCategory, previousCategory) => {
+  if (nextCategory !== previousCategory) {
+    void loadPlaces()
+  }
+})
+
+onMounted(async () => {
+  await loadCategories()
+  await loadPlaces()
+})
 </script>
 
 <template>
@@ -113,11 +143,12 @@ function isActiveCategory(label: string) {
 
     <div class="discover-category-bar">
       <button
-        v-for="category in topCategories"
+        v-for="category in categories"
         :key="category"
         type="button"
         class="discover-category-btn"
         :class="{ 'discover-category-btn-active': isActiveCategory(category) }"
+        @click="selectedCategory = category"
       >
         {{ category }}
       </button>
@@ -127,16 +158,26 @@ function isActiveCategory(label: string) {
       </button>
     </div>
 
+    <p v-if="isLoading || loadError" :style="{ position: 'absolute', top: '124px', left: '24px', right: '24px', zIndex: '2', margin: '0', color: loadError ? '#8b2f45' : '#6c6868', fontSize: '12px', lineHeight: '18px' }">
+      {{ loadError || '正在加载附近灵感...' }}
+    </p>
+
     <article
       v-for="card in discoverCards"
       :key="card.id"
       class="discover-card"
       :class="card.layoutClass"
+      role="button"
+      tabindex="0"
+      :aria-label="`查看 ${card.title} 详情`"
+      style="cursor: pointer;"
+      @click="openCard(card)"
+      @keyup.enter="openCard(card)"
     >
       <div class="discover-card-media">
         <img :src="card.image" :alt="card.title.replace('\n', '')" class="discover-card-image" />
 
-        <button type="button" class="discover-card-favorite" aria-label="收藏">
+        <button type="button" class="discover-card-favorite" aria-label="收藏" @click.stop>
           <img :src="heartOutlineAsset" alt="" />
         </button>
       </div>
